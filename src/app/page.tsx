@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { SurveyOverview } from '@/components/dashboard/SurveyOverview'
+import { SurveyChart } from '@/components/dashboard/SurveyChart'
 import type {
 	MpdMeasurement,
 	RawMpdRow,
@@ -48,6 +49,8 @@ export default function Home() {
 					<DashboardHeader />
 
 					<SurveyOverview mpdData={mpdData} ukriData={ukriData} />
+
+					<SurveyChart mpdData={mpdData} ukriData={ukriData} />
 				</Stack>
 			</Container>
 		</Box>

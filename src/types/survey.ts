@@ -36,3 +36,5 @@ export type MpdMeasurement = {
 	mpd: number
 	coordinates: Coordinates
 }
+
+export type SurveyMetric = 'mpd' | 'ukri'
