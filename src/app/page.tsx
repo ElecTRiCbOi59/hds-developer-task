@@ -1,11 +1,12 @@
 'use client'
 
 import { Box, Container, Stack } from '@mui/material'
+import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
 
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
-import { SurveyOverview } from '@/components/dashboard/SurveyOverview'
 import { SurveyChart } from '@/components/dashboard/SurveyChart'
+import { SurveyOverview } from '@/components/dashboard/SurveyOverview'
 import type {
 	MpdMeasurement,
 	RawMpdRow,
@@ -14,6 +15,14 @@ import type {
 } from '@/types/survey'
 import { parseCsv } from '@/utils/parseCsv'
 import { normaliseMpdData, normaliseUkriData } from '@/utils/survey'
+
+const SurveyMap = dynamic(
+	() =>
+		import('@/components/dashboard/SurveyMap').then(
+			(module) => module.SurveyMap,
+		),
+	{ ssr: false },
+)
 
 export default function Home() {
 	const [mpdData, setMpdData] = useState<MpdMeasurement[]>([])
@@ -51,6 +60,8 @@ export default function Home() {
 					<SurveyOverview mpdData={mpdData} ukriData={ukriData} />
 
 					<SurveyChart mpdData={mpdData} ukriData={ukriData} />
+
+					<SurveyMap mpdData={mpdData} ukriData={ukriData} />
 				</Stack>
 			</Container>
 		</Box>
