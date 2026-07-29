@@ -1,8 +1,10 @@
 'use client'
 
-import { Box, Container, Typography } from '@mui/material'
+import { Box, Container, Stack } from '@mui/material'
 import { useEffect, useState } from 'react'
 
+import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
+import { SurveyOverview } from '@/components/dashboard/SurveyOverview'
 import type {
 	MpdMeasurement,
 	RawMpdRow,
@@ -31,15 +33,22 @@ export default function Home() {
 	}, [])
 
 	return (
-		<Box component='main' sx={{ py: 6 }}>
+		<Box
+			component='main'
+			sx={{
+				minHeight: '100vh',
+				py: {
+					xs: 3,
+					md: 5,
+				},
+			}}
+		>
 			<Container maxWidth='xl'>
-				<Typography variant='h4'>HDS Survey Dashboard</Typography>
+				<Stack sx={{ gap: 4 }}>
+					<DashboardHeader />
 
-				<Typography sx={{ mt: 2 }}>
-					MPD readings: {mpdData.length}
-				</Typography>
-
-				<Typography>UKRI readings: {ukriData.length}</Typography>
+					<SurveyOverview mpdData={mpdData} ukriData={ukriData} />
+				</Stack>
 			</Container>
 		</Box>
 	)
