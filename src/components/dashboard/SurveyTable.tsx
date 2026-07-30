@@ -1,8 +1,21 @@
 'use client'
 
-import { Box, Card, Typography } from '@mui/material'
-import { DataGrid, type GridColDef } from '@mui/x-data-grid'
-import { useMemo } from 'react'
+import {
+	Box,
+	Card,
+	FormControl,
+	MenuItem,
+	Select,
+	Stack,
+	Typography,
+	type SelectChangeEvent,
+} from '@mui/material'
+import {
+	DataGrid,
+	type GridColDef,
+	type GridPaginationModel,
+} from '@mui/x-data-grid'
+import { useMemo, useState } from 'react'
 
 import type {
 	MpdMeasurement,
@@ -27,6 +40,8 @@ type SurveyRow = {
 	longitude: number
 }
 
+const PAGE_SIZES = [10, 25, 50]
+
 const coordinateColumn = (
 	field: 'latitude' | 'longitude',
 	label: string,
@@ -44,6 +59,13 @@ export const SurveyTable = ({
 	ukriData,
 }: SurveyTableProps) => {
 	const isMpd = metric === 'mpd'
+
+	const [paginationModel, setPaginationModel] = useState<GridPaginationModel>(
+		{
+			page: 0,
+			pageSize: 10,
+		},
+	)
 
 	const rows = useMemo<SurveyRow[]>(
 		() =>
@@ -119,22 +141,99 @@ export const SurveyTable = ({
 		]
 	}, [isMpd])
 
-	return (
-		<Card sx={{ p: { xs: 2, sm: 3 }, borderRadius: 3 }}>
-			<Box sx={{ mb: 2.5 }}>
-				<Typography variant='h6'>Survey data</Typography>
+	const changePageSize = (pageSize: number) => {
+		setPaginationModel({
+			page: 0,
+			pageSize,
+		})
+	}
 
-				<Typography
-					variant='body2'
+	const handlePageSizeChange = (event: SelectChangeEvent<number>) => {
+		changePageSize(Number(event.target.value))
+	}
+
+	return (
+		<Card
+			sx={{
+				p: {
+					xs: 2,
+					sm: 3,
+				},
+				borderRadius: 3,
+			}}
+		>
+			<Stack
+				sx={{
+					flexDirection: {
+						xs: 'column',
+						sm: 'row',
+					},
+					alignItems: {
+						xs: 'stretch',
+						sm: 'flex-end',
+					},
+					justifyContent: 'space-between',
+					gap: 2,
+					mb: 2.5,
+				}}
+			>
+				<Box>
+					<Typography variant='h6'>Survey data</Typography>
+
+					<Typography
+						variant='body2'
+						sx={{
+							mt: 0.5,
+							color: 'text.secondary',
+						}}
+					>
+						View and sort the individual {metric.toUpperCase()}{' '}
+						measurements collected across the route.
+					</Typography>
+				</Box>
+
+				<Stack
 					sx={{
-						mt: 0.5,
-						color: 'text.secondary',
+						flexDirection: 'row',
+						alignItems: 'center',
+						justifyContent: 'flex-start',
+						alignSelf: {
+							xs: 'flex-start',
+							sm: 'auto',
+						},
+						gap: 1,
 					}}
 				>
-					View and sort the individual {metric.toUpperCase()}{' '}
-					measurements collected across the route.
-				</Typography>
-			</Box>
+					<Typography
+						variant='body2'
+						sx={{
+							color: 'text.secondary',
+							whiteSpace: 'nowrap',
+						}}
+					>
+						Rows per page
+					</Typography>
+
+					<FormControl size='small'>
+						<Select
+							value={paginationModel.pageSize}
+							onChange={handlePageSizeChange}
+							aria-label='Rows per page'
+							sx={{
+								minWidth: 72,
+								fontSize: 13,
+								bgcolor: 'background.paper',
+							}}
+						>
+							{PAGE_SIZES.map((size) => (
+								<MenuItem key={size} value={size}>
+									{size}
+								</MenuItem>
+							))}
+						</Select>
+					</FormControl>
+				</Stack>
+			</Stack>
 
 			<Box
 				sx={{
@@ -148,15 +247,9 @@ export const SurveyTable = ({
 				<DataGrid
 					rows={rows}
 					columns={columns}
-					initialState={{
-						pagination: {
-							paginationModel: {
-								page: 0,
-								pageSize: 10,
-							},
-						},
-					}}
-					pageSizeOptions={[10, 25, 50]}
+					paginationModel={paginationModel}
+					onPaginationModelChange={setPaginationModel}
+					pageSizeOptions={PAGE_SIZES}
 					disableRowSelectionOnClick
 					disableColumnMenu
 					sx={{
@@ -200,6 +293,11 @@ export const SurveyTable = ({
 							borderTop: '1px solid',
 							borderColor: 'divider',
 						},
+
+						'& .MuiTablePagination-selectLabel, & .MuiTablePagination-select':
+							{
+								display: 'none',
+							},
 
 						'& .MuiTablePagination-root': {
 							color: 'text.secondary',

@@ -9,8 +9,9 @@ import {
 	Stack,
 	Tooltip,
 	Typography,
+	useMediaQuery,
+	useTheme,
 } from '@mui/material'
-import type { ApexOptions } from 'apexcharts'
 import dynamic from 'next/dynamic'
 import { useMemo } from 'react'
 
@@ -21,6 +22,7 @@ import type {
 	UkriMeasurement,
 } from '@/types/survey'
 import {
+	getChartOptions,
 	getMpdChartData,
 	getUkriChartData,
 	UKRI_BUCKET_SIZE,
@@ -47,15 +49,21 @@ export const SurveyChart = ({
 	mpdData,
 	ukriData,
 }: SurveyChartProps) => {
+	const theme = useTheme()
+	const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 	const isMpd = metric === 'mpd'
+
+	const label = isMpd ? 'MPD' : 'Average UKRI'
+	const unit = isMpd ? 'mm' : 'm/km'
+
+	const info = isMpd
+		? 'Mean Profile Depth, measured in millimetres.'
+		: 'UK Ride Index, measured in metres per kilometre.'
 
 	const data = useMemo(
 		() => (isMpd ? getMpdChartData(mpdData) : getUkriChartData(ukriData)),
 		[isMpd, mpdData, ukriData],
 	)
-
-	const label = isMpd ? 'MPD' : 'Average UKRI'
-	const unit = isMpd ? 'mm' : 'm/km'
 
 	const series = useMemo(
 		() => [
@@ -67,103 +75,17 @@ export const SurveyChart = ({
 		[label, data],
 	)
 
-	const options = useMemo<ApexOptions>(
-		() => ({
-			chart: {
-				type: 'area',
-				toolbar: {
-					show: false,
-				},
-				zoom: {
-					enabled: false,
-				},
-				events: {
-					dataPointSelection: (_event, _chart, options) => {
-						const index = options?.dataPointIndex
-
-						if (index === undefined || index < 0) {
-							return
-						}
-
-						const point = data[index]
-
-						if (!point) {
-							return
-						}
-
-						onSelect(point.x)
-					},
-				},
-			},
-			stroke: {
-				curve: 'smooth',
-				width: 2.25,
-			},
-			fill: {
-				type: 'gradient',
-				gradient: {
-					shadeIntensity: 0,
-					opacityFrom: 0.28,
-					opacityTo: 0.02,
-					stops: [0, 90, 100],
-				},
-			},
-			markers: {
-				size: 0,
-				hover: {
-					size: 5,
-				},
-			},
-			dataLabels: {
-				enabled: false,
-			},
-			grid: {
-				borderColor: '#EEF0F3',
-			},
-			xaxis: {
-				type: 'numeric',
-				labels: {
-					formatter: (value) =>
-						`${(Number(value) / 1000).toFixed(1)} km`,
-					style: {
-						colors: '#919EAB',
-						fontSize: '12px',
-					},
-				},
-			},
-			yaxis: {
-				labels: {
-					formatter: (value) => value.toFixed(1),
-					style: {
-						colors: '#919EAB',
-						fontSize: '12px',
-					},
-				},
-			},
-			tooltip: {
-				x: {
-					formatter: (value: number) =>
-						`${(value / 1000).toFixed(2)} km along route`,
-				},
-				y: {
-					formatter: (value: number) => `${value.toFixed(2)} ${unit}`,
-				},
-			},
-			annotations: {
-				xaxis:
-					selectedStart === null
-						? []
-						: [
-								{
-									x: selectedStart,
-									borderColor: '#1877F2',
-									strokeDashArray: 4,
-								},
-							],
-			},
-			colors: ['#1877F2'],
-		}),
-		[data, onSelect, selectedStart, unit],
+	const options = useMemo(
+		() =>
+			getChartOptions({
+				data,
+				label,
+				unit,
+				selectedStart,
+				onSelect,
+				isMobile,
+			}),
+		[data, isMobile, label, onSelect, selectedStart, unit],
 	)
 
 	const description = isMpd
@@ -209,19 +131,23 @@ export const SurveyChart = ({
 						/>
 
 						<Tooltip
-							title={
-								isMpd
-									? 'Mean Profile Depth, measured in millimetres.'
-									: 'UK Ride Index, measured in metres per kilometre.'
-							}
+							title={info}
 							arrow
+							enterTouchDelay={0}
+							leaveTouchDelay={3500}
 						>
 							<IconButton
 								size='small'
-								aria-label={`About ${label}`}
-								sx={{ color: 'text.secondary' }}
+								aria-label={info}
+								sx={{
+									color: 'text.secondary',
+								}}
 							>
-								<InfoOutlinedIcon sx={{ fontSize: 18 }} />
+								<InfoOutlinedIcon
+									sx={{
+										fontSize: 18,
+									}}
+								/>
 							</IconButton>
 						</Tooltip>
 					</Stack>
@@ -243,8 +169,12 @@ export const SurveyChart = ({
 			<Box
 				sx={{
 					height: {
-						xs: 300,
+						xs: 280,
 						sm: 380,
+					},
+					mx: {
+						xs: -1,
+						sm: 0,
 					},
 				}}
 			>
