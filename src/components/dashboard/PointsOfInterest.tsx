@@ -1,9 +1,8 @@
 'use client'
 
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined'
-import { Box, Card, Stack, Typography } from '@mui/material'
+import { Box, ButtonBase, Card, Stack, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import { useMemo } from 'react'
 
 import type {
 	MpdMeasurement,
@@ -14,80 +13,78 @@ import type {
 
 type PointsOfInterestProps = {
 	metric: SurveyMetric
+	selected: SurveySelection | null
 	mpdData: MpdMeasurement[]
 	ukriData: UkriMeasurement[]
-	selected: SurveySelection | null
 	onSelect: (selection: SurveySelection | null) => void
-	onHighlight: (selection: SurveySelection | null) => void
+	onHover: (selection: SurveySelection | null) => void
+}
+
+type PointOfInterest = SurveySelection & {
+	value: number
+	unit: string
 }
 
 export const PointsOfInterest = ({
 	metric,
+	selected,
 	mpdData,
 	ukriData,
-	selected,
 	onSelect,
-	onHighlight,
+	onHover,
 }: PointsOfInterestProps) => {
-	const measurements = useMemo<SurveySelection[]>(() => {
-		const data =
-			metric === 'mpd'
-				? mpdData.map((item) => ({
+	const points: PointOfInterest[] =
+		metric === 'mpd'
+			? [...mpdData]
+					.sort((a, b) => b.mpd - a.mpd)
+					.slice(0, 5)
+					.map((item) => ({
 						id: `mpd-${item.section}`,
 						start: item.start,
-						value: item.mpd,
 						coordinates: item.coordinates,
+						value: item.mpd,
+						unit: 'mm',
 					}))
-				: ukriData.map((item) => ({
+			: [...ukriData]
+					.sort((a, b) => b.ukri - a.ukri)
+					.slice(0, 5)
+					.map((item) => ({
 						id: `ukri-${item.track}-${item.segment}`,
 						start: item.start,
-						value: item.ukri,
 						coordinates: item.coordinates,
+						value: item.ukri,
+						unit: 'm/km',
 					}))
-
-		return data.sort((a, b) => b.value - a.value).slice(0, 5)
-	}, [metric, mpdData, ukriData])
-
-	const unit = metric === 'mpd' ? 'mm' : 'm/km'
-
-	const selectMeasurement = (measurement: SurveySelection) => {
-		onSelect(selected?.id === measurement.id ? null : measurement)
-	}
 
 	return (
 		<Card sx={{ p: 3, borderRadius: 3, height: '100%' }}>
-			<Box sx={{ mb: 2 }}>
+			<Box sx={{ mb: 2.5 }}>
 				<Typography variant='h6'>Highest measurements</Typography>
-
 				<Typography
 					variant='body2'
-					sx={{
-						mt: 0.5,
-						color: 'text.secondary',
-					}}
+					sx={{ mt: 0.5, color: 'text.secondary' }}
 				>
-					The highest {metric.toUpperCase()} values recorded across
-					the route.
+					Hover to preview a location, or select it to keep it
+					highlighted.
 				</Typography>
 			</Box>
 
-			<Stack sx={{ gap: 1 }}>
-				{measurements.map((measurement, index) => {
-					const active = selected?.id === measurement.id
+			<Stack sx={{ gap: 0.75 }}>
+				{points.map((point, index) => {
+					const active = selected?.id === point.id
 
 					return (
-						<Box
-							key={measurement.id}
-							onClick={() => selectMeasurement(measurement)}
-							onMouseEnter={() => onHighlight(measurement)}
-							onMouseLeave={() => onHighlight(null)}
+						<ButtonBase
+							key={point.id}
+							onClick={() => onSelect(active ? null : point)}
+							onMouseEnter={() => onHover(point)}
+							onMouseLeave={() => onHover(null)}
+							aria-pressed={active}
 							sx={{
-								display: 'flex',
-								alignItems: 'center',
-								gap: 1.5,
+								width: '100%',
 								p: 1.5,
 								borderRadius: 2,
-								cursor: 'pointer',
+								textAlign: 'left',
 								bgcolor: active
 									? (theme) =>
 											alpha(
@@ -107,31 +104,36 @@ export const PointsOfInterest = ({
 								},
 							}}
 						>
-							<Typography
-								variant='body2'
+							<Box
 								sx={{
-									width: 24,
-									color: 'text.disabled',
-									fontWeight: 700,
+									width: 30,
+									height: 30,
+									display: 'grid',
+									placeItems: 'center',
+									borderRadius: 1.5,
+									bgcolor: active
+										? 'primary.main'
+										: 'grey.100',
+									color: active
+										? 'primary.contrastText'
+										: 'text.secondary',
+									fontSize: 12,
+									fontWeight: 800,
 								}}
 							>
 								{String(index + 1).padStart(2, '0')}
-							</Typography>
+							</Box>
 
-							<Box sx={{ flex: 1 }}>
-								<Typography
-									variant='body2'
-									sx={{ fontWeight: 700 }}
-								>
-									{measurement.value.toFixed(2)} {unit}
+							<Box sx={{ flex: 1, ml: 1.25 }}>
+								<Typography sx={{ fontWeight: 700 }}>
+									{point.value.toFixed(2)} {point.unit}
 								</Typography>
-
 								<Typography
 									variant='caption'
 									sx={{ color: 'text.secondary' }}
 								>
-									{(measurement.start / 1000).toFixed(2)} km
-									along route
+									{(point.start / 1000).toFixed(2)} km along
+									route
 								</Typography>
 							</Box>
 
@@ -140,10 +142,10 @@ export const PointsOfInterest = ({
 									fontSize: 19,
 									color: active
 										? 'primary.main'
-										: 'text.disabled',
+										: 'text.secondary',
 								}}
 							/>
-						</Box>
+						</ButtonBase>
 					)
 				})}
 			</Stack>

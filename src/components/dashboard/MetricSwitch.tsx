@@ -1,63 +1,71 @@
-'use client'
-
-import { Button, Stack } from '@mui/material'
+import { Box, ButtonBase } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 
 import { shadows } from '@/theme/theme'
+
 import type { SurveyMetric } from '@/types/survey'
 
 type MetricSwitchProps = {
 	value: SurveyMetric
-	onChange: (metric: SurveyMetric) => void
+	onChange: (value: SurveyMetric) => void
 }
+
+const metrics: { label: string; value: SurveyMetric }[] = [
+	{ label: 'MPD', value: 'mpd' },
+	{ label: 'UKRI', value: 'ukri' },
+]
 
 export const MetricSwitch = ({ value, onChange }: MetricSwitchProps) => {
 	return (
-		<Stack
+		<Box
 			sx={{
-				flexDirection: 'row',
+				display: 'flex',
 				alignSelf: 'flex-start',
+				width: 'fit-content',
 				gap: 0.5,
 				p: 0.5,
-				borderRadius: 2,
-				bgcolor: 'grey.100',
+				borderRadius: 1.5,
+				bgcolor: 'grey.200',
 			}}
 		>
-			{(['mpd', 'ukri'] as SurveyMetric[]).map((metric) => {
-				const active = value === metric
+			{metrics.map((metric) => {
+				const active = value === metric.value
 
 				return (
-					<Button
-						key={metric}
-						onClick={() => onChange(metric)}
+					<ButtonBase
+						key={metric.value}
+						onClick={() => onChange(metric.value)}
 						aria-pressed={active}
 						sx={{
-							minWidth: 72,
-							px: 1.5,
-							py: 0.75,
-							borderRadius: 1.5,
+							height: 30,
+							minWidth: 58,
+							px: 1.25,
+							borderRadius: 1,
 							color: active ? 'text.primary' : 'text.secondary',
 							bgcolor: active
 								? 'background.paper'
 								: 'transparent',
-							fontSize: 13,
-							fontWeight: 700,
 							boxShadow: active ? shadows.control : 'none',
+							fontSize: 12,
+							fontWeight: 700,
+							transition:
+								'background-color 150ms ease, box-shadow 150ms ease, color 150ms ease',
 							'&:hover': {
 								bgcolor: active
 									? 'background.paper'
 									: (theme) =>
 											alpha(
-												theme.palette.common.white,
-												0.6,
+												theme.palette.background.paper,
+												0.55,
 											),
+								color: 'text.primary',
 							},
 						}}
 					>
-						{metric.toUpperCase()}
-					</Button>
+						{metric.label}
+					</ButtonBase>
 				)
 			})}
-		</Stack>
+		</Box>
 	)
 }

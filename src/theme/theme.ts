@@ -4,12 +4,28 @@ import { createTheme } from '@mui/material/styles'
 
 export const colours = {
 	primary: '#1877F2',
+	primaryLight: '#5B9CF6',
+	primaryDark: '#0C53B7',
 	primarySoft: '#E8F3FF',
 	success: '#22C55E',
+	successLight: '#86E8AB',
+	successDark: '#118D57',
 	successSoft: '#D8FBDE',
 	successText: '#065E49',
-	axis: '#919EAB',
 	grid: '#EEF0F3',
+	white: '#FFFFFF',
+	grey: {
+		50: '#FCFDFD',
+		100: '#F9FAFB',
+		200: '#F4F6F8',
+		300: '#DFE3E8',
+		400: '#C4CDD5',
+		500: '#919EAB',
+		600: '#637381',
+		700: '#454F5B',
+		800: '#1C252E',
+		900: '#141A21',
+	},
 }
 
 export const shadows = {
@@ -23,34 +39,23 @@ export const theme = createTheme({
 	palette: {
 		mode: 'light',
 		primary: {
-			light: '#5B9CF6',
+			light: colours.primaryLight,
 			main: colours.primary,
-			dark: '#0C53B7',
+			dark: colours.primaryDark,
 		},
 		success: {
-			light: '#86E8AB',
+			light: colours.successLight,
 			main: colours.success,
-			dark: '#118D57',
+			dark: colours.successDark,
 		},
-		grey: {
-			50: '#FCFDFD',
-			100: '#F9FAFB',
-			200: '#F4F6F8',
-			300: '#DFE3E8',
-			400: '#C4CDD5',
-			500: '#919EAB',
-			600: '#637381',
-			700: '#454F5B',
-			800: '#1C252E',
-			900: '#141A21',
-		},
+		grey: colours.grey,
 		background: {
-			default: '#F4F6F8',
-			paper: '#FFFFFF',
+			default: colours.grey[200],
+			paper: colours.white,
 		},
 		text: {
-			primary: '#1C252E',
-			secondary: '#637381',
+			primary: colours.grey[800],
+			secondary: colours.grey[600],
 		},
 		divider: 'rgba(145, 158, 171, 0.20)',
 	},
@@ -68,9 +73,6 @@ export const theme = createTheme({
 		},
 		h4: {
 			fontWeight: 800,
-		},
-		h5: {
-			fontWeight: 700,
 		},
 		h6: {
 			fontWeight: 700,

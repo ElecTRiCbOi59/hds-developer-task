@@ -10,10 +10,10 @@ import {
 	Tooltip,
 	Typography,
 	useMediaQuery,
-	useTheme,
 } from '@mui/material'
 import dynamic from 'next/dynamic'
 import { useMemo } from 'react'
+import { useTheme } from '@mui/material/styles'
 
 import { MetricSwitch } from '@/components/dashboard/MetricSwitch'
 import type {
@@ -28,9 +28,7 @@ import {
 	UKRI_BUCKET_SIZE,
 } from '@/utils/chart'
 
-const Chart = dynamic(() => import('react-apexcharts'), {
-	ssr: false,
-})
+const Chart = dynamic(() => import('react-apexcharts'), { ssr: false })
 
 type SurveyChartProps = {
 	metric: SurveyMetric
@@ -52,29 +50,16 @@ export const SurveyChart = ({
 	const theme = useTheme()
 	const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 	const isMpd = metric === 'mpd'
-
 	const label = isMpd ? 'MPD' : 'Average UKRI'
 	const unit = isMpd ? 'mm' : 'm/km'
-
 	const info = isMpd
 		? 'Mean Profile Depth, measured in millimetres.'
 		: 'UK Ride Index, measured in metres per kilometre.'
-
 	const data = useMemo(
 		() => (isMpd ? getMpdChartData(mpdData) : getUkriChartData(ukriData)),
 		[isMpd, mpdData, ukriData],
 	)
-
-	const series = useMemo(
-		() => [
-			{
-				name: label,
-				data,
-			},
-		],
-		[label, data],
-	)
-
+	const series = useMemo(() => [{ name: label, data }], [label, data])
 	const options = useMemo(
 		() =>
 			getChartOptions({
@@ -83,9 +68,9 @@ export const SurveyChart = ({
 				unit,
 				selectedStart,
 				onSelect,
-				isMobile,
+				compact: isMobile,
 			}),
-		[data, isMobile, label, onSelect, selectedStart, unit],
+		[data, label, unit, selectedStart, onSelect, isMobile],
 	)
 
 	const description = isMpd
@@ -96,10 +81,7 @@ export const SurveyChart = ({
 		<Card sx={{ p: { xs: 2.5, sm: 3 }, borderRadius: 3 }}>
 			<Stack
 				sx={{
-					flexDirection: {
-						xs: 'column',
-						sm: 'row',
-					},
+					flexDirection: { xs: 'column', sm: 'row' },
 					justifyContent: 'space-between',
 					alignItems: 'flex-start',
 					gap: 2,
@@ -117,7 +99,6 @@ export const SurveyChart = ({
 						<Typography variant='h6'>
 							Survey measurements
 						</Typography>
-
 						<Chip
 							label={unit}
 							size='small'
@@ -129,7 +110,6 @@ export const SurveyChart = ({
 								fontWeight: 700,
 							}}
 						/>
-
 						<Tooltip
 							title={info}
 							arrow
@@ -139,25 +119,15 @@ export const SurveyChart = ({
 							<IconButton
 								size='small'
 								aria-label={info}
-								sx={{
-									color: 'text.secondary',
-								}}
+								sx={{ color: 'text.secondary' }}
 							>
-								<InfoOutlinedIcon
-									sx={{
-										fontSize: 18,
-									}}
-								/>
+								<InfoOutlinedIcon sx={{ fontSize: 18 }} />
 							</IconButton>
 						</Tooltip>
 					</Stack>
-
 					<Typography
 						variant='body2'
-						sx={{
-							mt: 0.5,
-							color: 'text.secondary',
-						}}
+						sx={{ mt: 0.5, color: 'text.secondary' }}
 					>
 						{description}
 					</Typography>
@@ -168,14 +138,8 @@ export const SurveyChart = ({
 
 			<Box
 				sx={{
-					height: {
-						xs: 280,
-						sm: 380,
-					},
-					mx: {
-						xs: -1,
-						sm: 0,
-					},
+					height: { xs: 290, sm: 380 },
+					mx: { xs: -1.5, sm: 0 },
 				}}
 			>
 				<Chart

@@ -26,9 +26,7 @@ export const SectionNav = () => {
 
 	useEffect(() => {
 		const updateActiveSection = () => {
-			if (scrollingTo.current) {
-				return
-			}
+			if (scrollingTo.current) return
 
 			if (window.scrollY < 80) {
 				setActiveSection('overview')
@@ -39,9 +37,7 @@ export const SectionNav = () => {
 				.map(({ id }) => {
 					const element = document.getElementById(id)
 
-					if (!element) {
-						return null
-					}
+					if (!element) return null
 
 					return {
 						id,
@@ -57,16 +53,13 @@ export const SectionNav = () => {
 					} => section !== null,
 				)
 
-			if (sectionPositions.length === 0) {
-				return
-			}
+			if (sectionPositions.length === 0) return
 
 			const currentSection = sectionPositions.reduce(
 				(closest, section) => {
 					const closestDistance = Math.abs(
 						closest.top - SCROLL_OFFSET,
 					)
-
 					const sectionDistance = Math.abs(
 						section.top - SCROLL_OFFSET,
 					)
@@ -79,11 +72,9 @@ export const SectionNav = () => {
 		}
 
 		updateActiveSection()
-
 		window.addEventListener('scroll', updateActiveSection, {
 			passive: true,
 		})
-
 		window.addEventListener('resize', updateActiveSection)
 
 		return () => {
@@ -94,26 +85,18 @@ export const SectionNav = () => {
 
 	useEffect(() => {
 		return () => {
-			if (scrollTimeout.current) {
-				clearTimeout(scrollTimeout.current)
-			}
+			if (scrollTimeout.current) clearTimeout(scrollTimeout.current)
 		}
 	}, [])
 
 	const goTo = (id: string) => {
 		const element = document.getElementById(id)
+		if (!element) return
 
-		if (!element) {
-			return
-		}
-
-		if (scrollTimeout.current) {
-			clearTimeout(scrollTimeout.current)
-		}
+		if (scrollTimeout.current) clearTimeout(scrollTimeout.current)
 
 		scrollingTo.current = id
 		setActiveSection(id)
-
 		element.scrollIntoView({
 			behavior: 'smooth',
 			block: 'start',
@@ -133,10 +116,7 @@ export const SectionNav = () => {
 				position: 'sticky',
 				top: 12,
 				zIndex: 1200,
-				mx: {
-					xs: -1,
-					sm: 0,
-				},
+				mx: { xs: -1, sm: 0 },
 				p: 0.75,
 				border: '1px solid',
 				borderColor: 'divider',
@@ -151,9 +131,7 @@ export const SectionNav = () => {
 					flexDirection: 'row',
 					overflowX: 'auto',
 					gap: 0.5,
-					'&::-webkit-scrollbar': {
-						display: 'none',
-					},
+					'&::-webkit-scrollbar': { display: 'none' },
 				}}
 			>
 				{sections.map(({ label, id, icon: Icon }) => {

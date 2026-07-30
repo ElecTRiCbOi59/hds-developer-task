@@ -26,31 +26,26 @@ const SurveyMap = dynamic(
 		import('@/components/dashboard/SurveyMap').then(
 			(module) => module.SurveyMap,
 		),
-	{
-		ssr: false,
-	},
+	{ ssr: false },
 )
 
 export default function Home() {
 	const { mpdData, ukriData, loading, error } = useSurveyData()
-
 	const [metric, setMetric] = useState<SurveyMetric>('mpd')
 	const [selected, setSelected] = useState<SurveySelection | null>(null)
 	const [highlighted, setHighlighted] = useState<SurveySelection | null>(null)
 
-	const changeMetric = (value: SurveyMetric) => {
-		setMetric(value)
+	const changeMetric = (nextMetric: SurveyMetric) => {
+		setMetric(nextMetric)
 		setSelected(null)
 		setHighlighted(null)
 	}
 
-	const selectFromChart = (start: number) => {
+	const selectChartPoint = (start: number) => {
 		if (metric === 'mpd') {
 			const measurement = mpdData.find((item) => item.start === start)
 
-			if (!measurement) {
-				return
-			}
+			if (!measurement) return
 
 			const selection: SurveySelection = {
 				id: `mpd-${measurement.section}`,
@@ -60,7 +55,6 @@ export default function Home() {
 			}
 
 			setSelected(selected?.id === selection.id ? null : selection)
-
 			return
 		}
 
@@ -77,9 +71,7 @@ export default function Home() {
 					item.start < start + UKRI_BUCKET_SIZE,
 			)
 
-		if (!measurement) {
-			return
-		}
+		if (!measurement) return
 
 		const selection: SurveySelection = {
 			id: `ukri-${measurement.track}-${measurement.segment}`,
@@ -100,106 +92,68 @@ export default function Home() {
 					placeItems: 'center',
 				}}
 			>
-				<CircularProgress />
+				<CircularProgress size={32} />
 			</Box>
 		)
 	}
 
 	if (error) {
 		return (
-			<Container
-				maxWidth='xl'
-				sx={{
-					py: {
-						xs: 3,
-						md: 5,
-					},
-				}}
-			>
+			<Container maxWidth='xl' sx={{ py: 4 }}>
 				<Alert severity='error'>{error}</Alert>
 			</Container>
 		)
 	}
 
 	return (
-		<Box
-			component='main'
-			sx={{
-				minHeight: '100vh',
-				py: {
-					xs: 3,
-					md: 5,
-				},
-			}}
-		>
+		<Box component='main' sx={{ minHeight: '100vh', py: { xs: 3, md: 5 } }}>
 			<Container maxWidth='xl'>
-				<Stack sx={{ gap: 4 }}>
-					<Box
-						id='overview'
-						sx={{
-							scrollMarginTop: 100,
-						}}
-					>
-						<DashboardHeader />
-					</Box>
-
+				<Stack sx={{ gap: { xs: 3, md: 4 } }}>
+					<DashboardHeader />
 					<SectionNav />
 
-					<SurveyOverview mpdData={mpdData} ukriData={ukriData} />
+					<Box id='overview' sx={{ scrollMarginTop: 92 }}>
+						<SurveyOverview mpdData={mpdData} ukriData={ukriData} />
+					</Box>
 
-					<Box
-						id='measurements'
-						sx={{
-							scrollMarginTop: 100,
-						}}
-					>
+					<Box id='measurements' sx={{ scrollMarginTop: 92 }}>
 						<SurveyChart
 							metric={metric}
 							onMetricChange={changeMetric}
 							selectedStart={selected?.start ?? null}
-							onSelect={selectFromChart}
+							onSelect={selectChartPoint}
 							mpdData={mpdData}
 							ukriData={ukriData}
 						/>
 					</Box>
 
-					<Box
-						id='route'
-						sx={{
-							scrollMarginTop: 100,
-						}}
-					>
+					<Box id='route' sx={{ scrollMarginTop: 92 }}>
 						<Grid container spacing={3}>
 							<Grid size={{ xs: 12, lg: 8 }}>
 								<SurveyMap
 									metric={metric}
 									selected={selected}
 									highlighted={highlighted}
+									onSelect={setSelected}
 									mpdData={mpdData}
 									ukriData={ukriData}
-									onSelect={setSelected}
 								/>
 							</Grid>
 
 							<Grid size={{ xs: 12, lg: 4 }}>
 								<PointsOfInterest
 									metric={metric}
-									mpdData={mpdData}
-									ukriData={ukriData}
 									selected={selected}
 									onSelect={setSelected}
-									onHighlight={setHighlighted}
+									onHover={setHighlighted}
+									mpdData={mpdData}
+									ukriData={ukriData}
 								/>
 							</Grid>
 						</Grid>
 					</Box>
 
-					<Box
-						id='data'
-						sx={{
-							scrollMarginTop: 100,
-						}}
-					>
+					<Box id='data' sx={{ scrollMarginTop: 92 }}>
 						<SurveyTable
 							metric={metric}
 							mpdData={mpdData}

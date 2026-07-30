@@ -6,7 +6,7 @@ import { colours } from '@/theme/theme'
 type MetricCardProps = {
 	label: string
 	value: string
-	description: string
+	description?: string
 	icon: ReactNode
 }
 
@@ -20,22 +20,23 @@ export const MetricCard = ({
 		<Card
 			sx={{
 				height: '100%',
-				p: 2.5,
+				p: 3,
 				borderRadius: 3,
 			}}
 		>
-			<Stack sx={{ gap: 2 }}>
-				<Stack
-					sx={{
-						flexDirection: 'row',
-						alignItems: 'center',
-						justifyContent: 'space-between',
-						gap: 2,
-					}}
-				>
+			<Stack
+				sx={{
+					flexDirection: 'row',
+					alignItems: 'flex-start',
+					justifyContent: 'space-between',
+					gap: 2,
+				}}
+			>
+				<Box>
 					<Typography
 						variant='body2'
 						sx={{
+							mb: 1,
 							color: 'text.secondary',
 							fontWeight: 600,
 						}}
@@ -43,33 +44,46 @@ export const MetricCard = ({
 						{label}
 					</Typography>
 
-					<Box
-						sx={{
-							width: 38,
-							height: 38,
-							display: 'grid',
-							placeItems: 'center',
-							borderRadius: 2,
-							bgcolor: colours.primarySoft,
-							color: 'primary.main',
-						}}
-					>
-						{icon}
-					</Box>
-				</Stack>
-
-				<Box>
-					<Typography variant='h5'>{value}</Typography>
-
 					<Typography
-						variant='body2'
+						variant='h4'
 						sx={{
-							mt: 0.5,
-							color: 'text.secondary',
+							fontSize: {
+								xs: 26,
+								md: 30,
+							},
+							letterSpacing: '-0.03em',
 						}}
 					>
-						{description}
+						{value}
 					</Typography>
+
+					{description && (
+						<Typography
+							variant='caption'
+							sx={{
+								display: 'block',
+								mt: 1,
+								color: 'text.secondary',
+							}}
+						>
+							{description}
+						</Typography>
+					)}
+				</Box>
+
+				<Box
+					sx={{
+						width: 44,
+						height: 44,
+						flexShrink: 0,
+						display: 'grid',
+						placeItems: 'center',
+						borderRadius: 2,
+						bgcolor: colours.primarySoft,
+						color: 'primary.main',
+					}}
+				>
+					{icon}
 				</Box>
 			</Stack>
 		</Card>

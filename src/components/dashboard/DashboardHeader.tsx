@@ -23,26 +23,29 @@ export const DashboardHeader = () => {
 				<Typography variant='h3'>A602 Road Survey</Typography>
 
 				<Typography
-					variant='body1'
 					sx={{
-						mt: 0.75,
+						mt: 1,
+						maxWidth: 620,
 						color: 'text.secondary',
 					}}
 				>
-					Explore road surface measurements across the surveyed route.
+					A simple overview of road surface measurements collected
+					across the surveyed route.
 				</Typography>
 			</Box>
 
 			<Chip
 				icon={<CheckCircleRoundedIcon />}
 				label='Survey complete'
-				size='small'
 				sx={{
+					height: 34,
+					px: 0.5,
+					borderRadius: 1.5,
 					bgcolor: colours.successSoft,
 					color: colours.successText,
 					fontWeight: 700,
 					'& .MuiChip-icon': {
-						color: colours.success,
+						color: 'success.main',
 					},
 				}}
 			/>

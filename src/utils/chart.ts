@@ -10,47 +10,20 @@ export type ChartPoint = {
 	y: number
 }
 
-type ChartOptions = {
-	data: ChartPoint[]
-	label: string
-	unit: string
-	selectedStart: number | null
-	onSelect: (start: number) => void
-	isMobile: boolean
-}
-
-export const getMpdChartData = (data: MpdMeasurement[]): ChartPoint[] => {
-	return data.map((item) => ({
-		x: item.start,
-		y: item.mpd,
-	}))
-}
+export const getMpdChartData = (data: MpdMeasurement[]): ChartPoint[] =>
+	data.map((item) => ({ x: item.start, y: item.mpd }))
 
 export const getUkriChartData = (data: UkriMeasurement[]): ChartPoint[] => {
-	const buckets = new Map<
-		number,
-		{
-			total: number
-			count: number
-		}
-	>()
+	const buckets = new Map<number, { total: number; count: number }>()
 
 	data.forEach((item) => {
 		const start =
 			Math.floor(item.start / UKRI_BUCKET_SIZE) * UKRI_BUCKET_SIZE
+		const bucket = buckets.get(start) ?? { total: 0, count: 0 }
 
-		const bucket = buckets.get(start)
-
-		if (bucket) {
-			bucket.total += item.ukri
-			bucket.count += 1
-			return
-		}
-
-		buckets.set(start, {
-			total: item.ukri,
-			count: 1,
-		})
+		bucket.total += item.ukri
+		bucket.count += 1
+		buckets.set(start, bucket)
 	})
 
 	return Array.from(buckets.entries())
@@ -67,91 +40,78 @@ export const getChartOptions = ({
 	unit,
 	selectedStart,
 	onSelect,
-	isMobile,
-}: ChartOptions): ApexOptions => ({
+	compact = false,
+}: {
+	data: ChartPoint[]
+	label: string
+	unit: string
+	selectedStart: number | null
+	onSelect: (start: number) => void
+	compact?: boolean
+}): ApexOptions => ({
 	chart: {
 		type: 'area',
-		toolbar: {
-			show: false,
-		},
-		zoom: {
-			enabled: false,
-		},
+		toolbar: { show: false },
+		zoom: { enabled: false },
+		fontFamily: 'inherit',
+		animations: { enabled: true, speed: 300 },
 		events: {
-			dataPointSelection: (_event, _chart, options) => {
-				const index = options?.dataPointIndex
-
-				if (index === undefined || index < 0) {
-					return
-				}
-
-				const point = data[index]
-
-				if (!point) {
-					return
-				}
-
-				onSelect(point.x)
+			dataPointSelection: (_event, _chart, config) => {
+				const point = data[config?.dataPointIndex ?? -1]
+				if (point) onSelect(point.x)
 			},
 		},
 	},
-	stroke: {
-		curve: 'smooth',
-		width: isMobile ? 1.75 : 2.25,
-	},
+	colors: [colours.primary],
+	stroke: { curve: 'smooth', width: compact ? 2 : 2.5 },
 	fill: {
 		type: 'gradient',
 		gradient: {
 			shadeIntensity: 0,
-			opacityFrom: 0.28,
+			opacityFrom: 0.24,
 			opacityTo: 0.02,
 			stops: [0, 90, 100],
 		},
 	},
-	markers: {
-		size: 0,
-		hover: {
-			size: isMobile ? 4 : 5,
-		},
-	},
-	dataLabels: {
-		enabled: false,
-	},
+	markers: { size: 0, hover: { size: compact ? 4 : 5 } },
+	dataLabels: { enabled: false },
 	grid: {
 		borderColor: colours.grid,
-		padding: {
-			left: isMobile ? 4 : 8,
-			right: isMobile ? 4 : 8,
-		},
+		strokeDashArray: 4,
+		padding: compact
+			? { top: 6, right: 4, bottom: 6, left: 2 }
+			: { top: 8, right: 14, bottom: 14, left: 12 },
 	},
 	xaxis: {
 		type: 'numeric',
-		tickAmount: isMobile ? 3 : 6,
+		tickAmount: compact ? 4 : 6,
+		axisBorder: { show: false },
+		axisTicks: { show: false },
 		labels: {
-			formatter: (value) => `${(Number(value) / 1000).toFixed(1)} km`,
+			offsetY: 2,
+			rotate: 0,
+			hideOverlappingLabels: true,
 			style: {
-				colors: colours.axis,
-				fontSize: isMobile ? '10px' : '12px',
+				colors: colours.grey[500],
+				fontSize: compact ? '11px' : '12px',
 			},
+			formatter: (value: string) =>
+				`${(Number(value) / 1000).toFixed(1)} km`,
 		},
+		tooltip: { enabled: false },
 	},
 	yaxis: {
-		tickAmount: isMobile ? 3 : 5,
+		min: 0,
+		tickAmount: compact ? 4 : 5,
 		labels: {
-			formatter: (value) => value.toFixed(1),
+			offsetX: compact ? 0 : -2,
+			minWidth: compact ? 28 : 0,
+			maxWidth: compact ? 34 : 160,
 			style: {
-				colors: colours.axis,
-				fontSize: isMobile ? '10px' : '12px',
+				colors: colours.grey[500],
+				fontSize: compact ? '11px' : '12px',
 			},
-		},
-	},
-	tooltip: {
-		x: {
-			formatter: (value: number) =>
-				`${(value / 1000).toFixed(2)} km along route`,
-		},
-		y: {
-			formatter: (value: number) => `${value.toFixed(2)} ${unit}`,
+			formatter: (value: number) => value.toFixed(1),
 		},
 	},
 	annotations: {
@@ -166,5 +126,15 @@ export const getChartOptions = ({
 						},
 					],
 	},
-	colors: [colours.primary],
+	tooltip: {
+		theme: 'light',
+		x: {
+			formatter: (value: number) =>
+				`${(value / 1000).toFixed(2)} km along route`,
+		},
+		y: {
+			formatter: (value: number) => `${value.toFixed(2)} ${unit}`,
+			title: { formatter: () => label },
+		},
+	},
 })
