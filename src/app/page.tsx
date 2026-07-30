@@ -8,6 +8,7 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { PointsOfInterest } from '@/components/dashboard/PointsOfInterest'
 import { SurveyChart } from '@/components/dashboard/SurveyChart'
 import { SurveyOverview } from '@/components/dashboard/SurveyOverview'
+import { SurveyTable } from '@/components/dashboard/SurveyTable'
 import type {
 	MpdMeasurement,
 	RawMpdRow,
@@ -103,6 +104,12 @@ export default function Home() {
 							/>
 						</Grid>
 					</Grid>
+
+					<SurveyTable
+						metric={metric}
+						mpdData={mpdData}
+						ukriData={ukriData}
+					/>
 				</Stack>
 			</Container>
 		</Box>
