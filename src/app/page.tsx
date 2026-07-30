@@ -57,6 +57,51 @@ export default function Home() {
 		setHighlighted(null)
 	}
 
+	const selectFromChart = (start: number) => {
+		if (metric === 'mpd') {
+			const measurement = mpdData.find((item) => item.start === start)
+
+			if (!measurement) {
+				return
+			}
+
+			const selection: SurveySelection = {
+				id: `mpd-${measurement.section}`,
+				start: measurement.start,
+				value: measurement.mpd,
+				coordinates: measurement.coordinates,
+			}
+
+			setSelected(selected?.id === selection.id ? null : selection)
+
+			return
+		}
+
+		const measurement =
+			ukriData.find(
+				(item) =>
+					item.track === 1 &&
+					item.start >= start &&
+					item.start < start + 20,
+			) ??
+			ukriData.find(
+				(item) => item.start >= start && item.start < start + 20,
+			)
+
+		if (!measurement) {
+			return
+		}
+
+		const selection: SurveySelection = {
+			id: `ukri-${measurement.track}-${measurement.segment}`,
+			start,
+			value: measurement.ukri,
+			coordinates: measurement.coordinates,
+		}
+
+		setSelected(selected?.id === selection.id ? null : selection)
+	}
+
 	return (
 		<Box
 			component='main'
@@ -77,6 +122,8 @@ export default function Home() {
 					<SurveyChart
 						metric={metric}
 						onMetricChange={changeMetric}
+						selectedStart={selected?.start ?? null}
+						onSelect={selectFromChart}
 						mpdData={mpdData}
 						ukriData={ukriData}
 					/>

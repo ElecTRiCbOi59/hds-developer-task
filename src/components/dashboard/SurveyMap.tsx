@@ -1,7 +1,14 @@
 'use client'
 
-import { Box, Card, Typography } from '@mui/material'
-import { useEffect, useMemo } from 'react'
+import MyLocationRoundedIcon from '@mui/icons-material/MyLocationRounded'
+import {
+	Box,
+	Card,
+	IconButton,
+	Tooltip as MuiTooltip,
+	Typography,
+} from '@mui/material'
+import { useEffect, useMemo, useState } from 'react'
 import {
 	CircleMarker,
 	MapContainer,
@@ -31,23 +38,31 @@ type Position = [number, number]
 
 type MapControllerProps = {
 	route: Position[]
+	resetKey: number
 	selectedPosition?: Position
 }
 
-const MapController = ({ route, selectedPosition }: MapControllerProps) => {
+const MapController = ({
+	route,
+	resetKey,
+	selectedPosition,
+}: MapControllerProps) => {
 	const map = useMap()
 
 	useEffect(() => {
-		if (selectedPosition) return
-		if (route.length <= 1) return
+		if (selectedPosition || route.length <= 1) {
+			return
+		}
 
 		map.fitBounds(route, {
 			padding: [28, 28],
 		})
-	}, [map, route, selectedPosition])
+	}, [map, resetKey, route, selectedPosition])
 
 	useEffect(() => {
-		if (!selectedPosition) return
+		if (!selectedPosition) {
+			return
+		}
 
 		map.flyTo(selectedPosition, Math.max(map.getZoom(), 16), {
 			duration: 0.6,
@@ -65,6 +80,8 @@ export const SurveyMap = ({
 	ukriData,
 	onSelect,
 }: SurveyMapProps) => {
+	const [resetKey, setResetKey] = useState(0)
+
 	const route = useMemo(() => {
 		const source =
 			metric === 'mpd'
@@ -100,6 +117,21 @@ export const SurveyMap = ({
 		51.9409, -0.2742,
 	]
 
+	const handleMarkerClick = (selection: SurveySelection) => {
+		if (selected?.id === selection.id) {
+			onSelect(null)
+			setResetKey((value) => value + 1)
+			return
+		}
+
+		onSelect(selection)
+	}
+
+	const resetMap = () => {
+		onSelect(null)
+		setResetKey((value) => value + 1)
+	}
+
 	return (
 		<Card sx={{ p: 3, borderRadius: 3, height: '100%' }}>
 			<Box sx={{ mb: 2 }}>
@@ -118,6 +150,7 @@ export const SurveyMap = ({
 
 			<Box
 				sx={{
+					position: 'relative',
 					height: 360,
 					overflow: 'hidden',
 					borderRadius: 2.5,
@@ -131,6 +164,7 @@ export const SurveyMap = ({
 				<MapContainer center={centre} zoom={14} scrollWheelZoom={false}>
 					<MapController
 						route={route}
+						resetKey={resetKey}
 						selectedPosition={selectedPosition}
 					/>
 
@@ -159,12 +193,7 @@ export const SurveyMap = ({
 								weight: 3,
 							}}
 							eventHandlers={{
-								click: () =>
-									onSelect(
-										selected?.id === active.id
-											? null
-											: active,
-									),
+								click: () => handleMarkerClick(active),
 							}}
 						>
 							<Tooltip permanent direction='top'>
@@ -173,6 +202,32 @@ export const SurveyMap = ({
 						</CircleMarker>
 					)}
 				</MapContainer>
+
+				<MuiTooltip title='Reset map view' arrow>
+					<IconButton
+						onClick={resetMap}
+						aria-label='Reset map view'
+						sx={{
+							position: 'absolute',
+							top: 12,
+							right: 12,
+							zIndex: 1000,
+							width: 36,
+							height: 36,
+							bgcolor: 'background.paper',
+							boxShadow: '0 4px 12px rgba(28, 37, 46, 0.16)',
+							'&:hover': {
+								bgcolor: 'grey.100',
+							},
+						}}
+					>
+						<MyLocationRoundedIcon
+							sx={{
+								fontSize: 19,
+							}}
+						/>
+					</IconButton>
+				</MuiTooltip>
 			</Box>
 		</Card>
 	)

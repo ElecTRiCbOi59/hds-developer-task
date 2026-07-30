@@ -10,6 +10,7 @@ import {
 	Tooltip,
 	Typography,
 } from '@mui/material'
+import type { ApexOptions } from 'apexcharts'
 import dynamic from 'next/dynamic'
 import { useMemo } from 'react'
 
@@ -32,6 +33,8 @@ const Chart = dynamic(() => import('react-apexcharts'), {
 type SurveyChartProps = {
 	metric: SurveyMetric
 	onMetricChange: (metric: SurveyMetric) => void
+	selectedStart: number | null
+	onSelect: (start: number) => void
 	mpdData: MpdMeasurement[]
 	ukriData: UkriMeasurement[]
 }
@@ -39,6 +42,8 @@ type SurveyChartProps = {
 export const SurveyChart = ({
 	metric,
 	onMetricChange,
+	selectedStart,
+	onSelect,
 	mpdData,
 	ukriData,
 }: SurveyChartProps) => {
@@ -52,19 +57,46 @@ export const SurveyChart = ({
 	const label = isMpd ? 'MPD' : 'Average UKRI'
 	const unit = isMpd ? 'mm' : 'm/km'
 
-	const options = useMemo(
+	const series = useMemo(
+		() => [
+			{
+				name: label,
+				data,
+			},
+		],
+		[label, data],
+	)
+
+	const options = useMemo<ApexOptions>(
 		() => ({
 			chart: {
-				type: 'area' as const,
+				type: 'area',
 				toolbar: {
 					show: false,
 				},
 				zoom: {
 					enabled: false,
 				},
+				events: {
+					dataPointSelection: (_event, _chart, options) => {
+						const index = options?.dataPointIndex
+
+						if (index === undefined || index < 0) {
+							return
+						}
+
+						const point = data[index]
+
+						if (!point) {
+							return
+						}
+
+						onSelect(point.x)
+					},
+				},
 			},
 			stroke: {
-				curve: 'smooth' as const,
+				curve: 'smooth',
 				width: 2.25,
 			},
 			fill: {
@@ -76,6 +108,12 @@ export const SurveyChart = ({
 					stops: [0, 90, 100],
 				},
 			},
+			markers: {
+				size: 0,
+				hover: {
+					size: 5,
+				},
+			},
 			dataLabels: {
 				enabled: false,
 			},
@@ -83,9 +121,9 @@ export const SurveyChart = ({
 				borderColor: '#EEF0F3',
 			},
 			xaxis: {
-				type: 'numeric' as const,
+				type: 'numeric',
 				labels: {
-					formatter: (value: string) =>
+					formatter: (value) =>
 						`${(Number(value) / 1000).toFixed(1)} km`,
 					style: {
 						colors: '#919EAB',
@@ -95,7 +133,7 @@ export const SurveyChart = ({
 			},
 			yaxis: {
 				labels: {
-					formatter: (value: number) => value.toFixed(1),
+					formatter: (value) => value.toFixed(1),
 					style: {
 						colors: '#919EAB',
 						fontSize: '12px',
@@ -111,9 +149,21 @@ export const SurveyChart = ({
 					formatter: (value: number) => `${value.toFixed(2)} ${unit}`,
 				},
 			},
+			annotations: {
+				xaxis:
+					selectedStart === null
+						? []
+						: [
+								{
+									x: selectedStart,
+									borderColor: '#1877F2',
+									strokeDashArray: 4,
+								},
+							],
+			},
 			colors: ['#1877F2'],
 		}),
-		[unit],
+		[data, onSelect, selectedStart, unit],
 	)
 
 	const description = isMpd
@@ -168,6 +218,7 @@ export const SurveyChart = ({
 						>
 							<IconButton
 								size='small'
+								aria-label={`About ${label}`}
 								sx={{ color: 'text.secondary' }}
 							>
 								<InfoOutlinedIcon sx={{ fontSize: 18 }} />
@@ -199,12 +250,7 @@ export const SurveyChart = ({
 			>
 				<Chart
 					options={options}
-					series={[
-						{
-							name: label,
-							data,
-						},
-					]}
+					series={series}
 					type='area'
 					height='100%'
 				/>
