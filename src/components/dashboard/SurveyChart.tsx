@@ -11,7 +11,7 @@ import {
 	Typography,
 } from '@mui/material'
 import dynamic from 'next/dynamic'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 
 import { MetricSwitch } from '@/components/dashboard/MetricSwitch'
 import type {
@@ -30,12 +30,18 @@ const Chart = dynamic(() => import('react-apexcharts'), {
 })
 
 type SurveyChartProps = {
+	metric: SurveyMetric
+	onMetricChange: (metric: SurveyMetric) => void
 	mpdData: MpdMeasurement[]
 	ukriData: UkriMeasurement[]
 }
 
-export const SurveyChart = ({ mpdData, ukriData }: SurveyChartProps) => {
-	const [metric, setMetric] = useState<SurveyMetric>('mpd')
+export const SurveyChart = ({
+	metric,
+	onMetricChange,
+	mpdData,
+	ukriData,
+}: SurveyChartProps) => {
 	const isMpd = metric === 'mpd'
 
 	const data = useMemo(
@@ -162,15 +168,9 @@ export const SurveyChart = ({ mpdData, ukriData }: SurveyChartProps) => {
 						>
 							<IconButton
 								size='small'
-								sx={{
-									color: 'text.secondary',
-								}}
+								sx={{ color: 'text.secondary' }}
 							>
-								<InfoOutlinedIcon
-									sx={{
-										fontSize: 18,
-									}}
-								/>
+								<InfoOutlinedIcon sx={{ fontSize: 18 }} />
 							</IconButton>
 						</Tooltip>
 					</Stack>
@@ -186,7 +186,7 @@ export const SurveyChart = ({ mpdData, ukriData }: SurveyChartProps) => {
 					</Typography>
 				</Box>
 
-				<MetricSwitch value={metric} onChange={setMetric} />
+				<MetricSwitch value={metric} onChange={onMetricChange} />
 			</Stack>
 
 			<Box

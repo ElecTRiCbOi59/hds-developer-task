@@ -1,16 +1,19 @@
 'use client'
 
-import { Box, Container, Stack } from '@mui/material'
+import { Box, Container, Grid, Stack } from '@mui/material'
 import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
 
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
+import { PointsOfInterest } from '@/components/dashboard/PointsOfInterest'
 import { SurveyChart } from '@/components/dashboard/SurveyChart'
 import { SurveyOverview } from '@/components/dashboard/SurveyOverview'
 import type {
 	MpdMeasurement,
 	RawMpdRow,
 	RawUkriRow,
+	SurveyMetric,
+	SurveySelection,
 	UkriMeasurement,
 } from '@/types/survey'
 import { parseCsv } from '@/utils/parseCsv'
@@ -21,12 +24,17 @@ const SurveyMap = dynamic(
 		import('@/components/dashboard/SurveyMap').then(
 			(module) => module.SurveyMap,
 		),
-	{ ssr: false },
+	{
+		ssr: false,
+	},
 )
 
 export default function Home() {
 	const [mpdData, setMpdData] = useState<MpdMeasurement[]>([])
 	const [ukriData, setUkriData] = useState<UkriMeasurement[]>([])
+	const [metric, setMetric] = useState<SurveyMetric>('mpd')
+	const [selected, setSelected] = useState<SurveySelection | null>(null)
+	const [highlighted, setHighlighted] = useState<SurveySelection | null>(null)
 
 	useEffect(() => {
 		const loadData = async () => {
@@ -41,6 +49,12 @@ export default function Home() {
 
 		loadData()
 	}, [])
+
+	const changeMetric = (value: SurveyMetric) => {
+		setMetric(value)
+		setSelected(null)
+		setHighlighted(null)
+	}
 
 	return (
 		<Box
@@ -59,9 +73,36 @@ export default function Home() {
 
 					<SurveyOverview mpdData={mpdData} ukriData={ukriData} />
 
-					<SurveyChart mpdData={mpdData} ukriData={ukriData} />
+					<SurveyChart
+						metric={metric}
+						onMetricChange={changeMetric}
+						mpdData={mpdData}
+						ukriData={ukriData}
+					/>
 
-					<SurveyMap mpdData={mpdData} ukriData={ukriData} />
+					<Grid container spacing={3}>
+						<Grid size={{ xs: 12, lg: 8 }}>
+							<SurveyMap
+								metric={metric}
+								selected={selected}
+								highlighted={highlighted}
+								mpdData={mpdData}
+								ukriData={ukriData}
+								onSelect={setSelected}
+							/>
+						</Grid>
+
+						<Grid size={{ xs: 12, lg: 4 }}>
+							<PointsOfInterest
+								metric={metric}
+								mpdData={mpdData}
+								ukriData={ukriData}
+								selected={selected}
+								onSelect={setSelected}
+								onHighlight={setHighlighted}
+							/>
+						</Grid>
+					</Grid>
 				</Stack>
 			</Container>
 		</Box>

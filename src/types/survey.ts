@@ -38,3 +38,10 @@ export type MpdMeasurement = {
 }
 
 export type SurveyMetric = 'mpd' | 'ukri'
+
+export type SurveySelection = {
+	id: string
+	start: number
+	value: number
+	coordinates?: Coordinates
+}

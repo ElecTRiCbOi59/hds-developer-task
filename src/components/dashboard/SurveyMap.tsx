@@ -2,35 +2,72 @@
 
 import { Box, Card, Typography } from '@mui/material'
 import { useEffect, useMemo } from 'react'
-import { MapContainer, Polyline, TileLayer, useMap } from 'react-leaflet'
+import {
+	CircleMarker,
+	MapContainer,
+	Polyline,
+	TileLayer,
+	Tooltip,
+	useMap,
+} from 'react-leaflet'
 
-import type { MpdMeasurement, UkriMeasurement } from '@/types/survey'
+import type {
+	MpdMeasurement,
+	SurveyMetric,
+	SurveySelection,
+	UkriMeasurement,
+} from '@/types/survey'
 
 type SurveyMapProps = {
+	metric: SurveyMetric
+	selected: SurveySelection | null
+	highlighted: SurveySelection | null
 	mpdData: MpdMeasurement[]
 	ukriData: UkriMeasurement[]
+	onSelect: (selection: SurveySelection | null) => void
 }
 
 type Position = [number, number]
 
-const MapController = ({ route }: { route: Position[] }) => {
+type MapControllerProps = {
+	route: Position[]
+	selectedPosition?: Position
+}
+
+const MapController = ({ route, selectedPosition }: MapControllerProps) => {
 	const map = useMap()
 
 	useEffect(() => {
+		if (selectedPosition) return
 		if (route.length <= 1) return
 
 		map.fitBounds(route, {
 			padding: [28, 28],
 		})
-	}, [map, route])
+	}, [map, route, selectedPosition])
+
+	useEffect(() => {
+		if (!selectedPosition) return
+
+		map.flyTo(selectedPosition, Math.max(map.getZoom(), 16), {
+			duration: 0.6,
+		})
+	}, [map, selectedPosition])
 
 	return null
 }
 
-export const SurveyMap = ({ mpdData, ukriData }: SurveyMapProps) => {
+export const SurveyMap = ({
+	metric,
+	selected,
+	highlighted,
+	mpdData,
+	ukriData,
+	onSelect,
+}: SurveyMapProps) => {
 	const route = useMemo(() => {
 		const source =
-			mpdData.length > 0
+			metric === 'mpd'
 				? mpdData
 				: ukriData.filter((item) => item.track === 1)
 
@@ -41,14 +78,30 @@ export const SurveyMap = ({ mpdData, ukriData }: SurveyMapProps) => {
 					item.coordinates.longitude,
 				] as Position,
 		)
-	}, [mpdData, ukriData])
+	}, [metric, mpdData, ukriData])
+
+	const active = highlighted ?? selected
+
+	const activePosition = active?.coordinates
+		? ([
+				active.coordinates.latitude,
+				active.coordinates.longitude,
+			] as Position)
+		: undefined
+
+	const selectedPosition = selected?.coordinates
+		? ([
+				selected.coordinates.latitude,
+				selected.coordinates.longitude,
+			] as Position)
+		: undefined
 
 	const centre: Position = route[Math.floor(route.length / 2)] ?? [
 		51.9409, -0.2742,
 	]
 
 	return (
-		<Card sx={{ p: 3, borderRadius: 3 }}>
+		<Card sx={{ p: 3, borderRadius: 3, height: '100%' }}>
 			<Box sx={{ mb: 2 }}>
 				<Typography variant='h6'>Survey route</Typography>
 
@@ -76,7 +129,10 @@ export const SurveyMap = ({ mpdData, ukriData }: SurveyMapProps) => {
 				}}
 			>
 				<MapContainer center={centre} zoom={14} scrollWheelZoom={false}>
-					<MapController route={route} />
+					<MapController
+						route={route}
+						selectedPosition={selectedPosition}
+					/>
 
 					<TileLayer
 						attribution='&copy; OpenStreetMap contributors'
@@ -91,6 +147,31 @@ export const SurveyMap = ({ mpdData, ukriData }: SurveyMapProps) => {
 							opacity: 0.8,
 						}}
 					/>
+
+					{active && activePosition && (
+						<CircleMarker
+							center={activePosition}
+							radius={8}
+							pathOptions={{
+								color: '#fff',
+								fillColor: '#1877F2',
+								fillOpacity: 1,
+								weight: 3,
+							}}
+							eventHandlers={{
+								click: () =>
+									onSelect(
+										selected?.id === active.id
+											? null
+											: active,
+									),
+							}}
+						>
+							<Tooltip permanent direction='top'>
+								{(active.start / 1000).toFixed(2)} km
+							</Tooltip>
+						</CircleMarker>
+					)}
 				</MapContainer>
 			</Box>
 		</Card>
