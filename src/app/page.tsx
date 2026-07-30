@@ -1,8 +1,15 @@
 'use client'
 
-import { Box, Container, Grid, Stack } from '@mui/material'
+import {
+	Alert,
+	Box,
+	CircularProgress,
+	Container,
+	Grid,
+	Stack,
+} from '@mui/material'
 import dynamic from 'next/dynamic'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { PointsOfInterest } from '@/components/dashboard/PointsOfInterest'
@@ -10,16 +17,9 @@ import { SectionNav } from '@/components/dashboard/SectionNav'
 import { SurveyChart } from '@/components/dashboard/SurveyChart'
 import { SurveyOverview } from '@/components/dashboard/SurveyOverview'
 import { SurveyTable } from '@/components/dashboard/SurveyTable'
-import type {
-	MpdMeasurement,
-	RawMpdRow,
-	RawUkriRow,
-	SurveyMetric,
-	SurveySelection,
-	UkriMeasurement,
-} from '@/types/survey'
-import { parseCsv } from '@/utils/parseCsv'
-import { normaliseMpdData, normaliseUkriData } from '@/utils/survey'
+import { useSurveyData } from '@/hooks/useSurveyData'
+import type { SurveyMetric, SurveySelection } from '@/types/survey'
+import { UKRI_BUCKET_SIZE } from '@/utils/chart'
 
 const SurveyMap = dynamic(
 	() =>
@@ -32,25 +32,11 @@ const SurveyMap = dynamic(
 )
 
 export default function Home() {
-	const [mpdData, setMpdData] = useState<MpdMeasurement[]>([])
-	const [ukriData, setUkriData] = useState<UkriMeasurement[]>([])
+	const { mpdData, ukriData, loading, error } = useSurveyData()
+
 	const [metric, setMetric] = useState<SurveyMetric>('mpd')
 	const [selected, setSelected] = useState<SurveySelection | null>(null)
 	const [highlighted, setHighlighted] = useState<SurveySelection | null>(null)
-
-	useEffect(() => {
-		const loadData = async () => {
-			const [mpdRows, ukriRows] = await Promise.all([
-				parseCsv<RawMpdRow>('/data/mpd.csv'),
-				parseCsv<RawUkriRow>('/data/ukri.csv'),
-			])
-
-			setMpdData(normaliseMpdData(mpdRows))
-			setUkriData(normaliseUkriData(ukriRows))
-		}
-
-		loadData()
-	}, [])
 
 	const changeMetric = (value: SurveyMetric) => {
 		setMetric(value)
@@ -83,10 +69,12 @@ export default function Home() {
 				(item) =>
 					item.track === 1 &&
 					item.start >= start &&
-					item.start < start + 20,
+					item.start < start + UKRI_BUCKET_SIZE,
 			) ??
 			ukriData.find(
-				(item) => item.start >= start && item.start < start + 20,
+				(item) =>
+					item.start >= start &&
+					item.start < start + UKRI_BUCKET_SIZE,
 			)
 
 		if (!measurement) {
@@ -103,6 +91,36 @@ export default function Home() {
 		setSelected(selected?.id === selection.id ? null : selection)
 	}
 
+	if (loading) {
+		return (
+			<Box
+				sx={{
+					minHeight: '100vh',
+					display: 'grid',
+					placeItems: 'center',
+				}}
+			>
+				<CircularProgress />
+			</Box>
+		)
+	}
+
+	if (error) {
+		return (
+			<Container
+				maxWidth='xl'
+				sx={{
+					py: {
+						xs: 3,
+						md: 5,
+					},
+				}}
+			>
+				<Alert severity='error'>{error}</Alert>
+			</Container>
+		)
+	}
+
 	return (
 		<Box
 			component='main'
@@ -116,7 +134,12 @@ export default function Home() {
 		>
 			<Container maxWidth='xl'>
 				<Stack sx={{ gap: 4 }}>
-					<Box id='overview' sx={{ scrollMarginTop: 100 }}>
+					<Box
+						id='overview'
+						sx={{
+							scrollMarginTop: 100,
+						}}
+					>
 						<DashboardHeader />
 					</Box>
 
@@ -124,7 +147,12 @@ export default function Home() {
 
 					<SurveyOverview mpdData={mpdData} ukriData={ukriData} />
 
-					<Box id='measurements' sx={{ scrollMarginTop: 100 }}>
+					<Box
+						id='measurements'
+						sx={{
+							scrollMarginTop: 100,
+						}}
+					>
 						<SurveyChart
 							metric={metric}
 							onMetricChange={changeMetric}
@@ -135,7 +163,12 @@ export default function Home() {
 						/>
 					</Box>
 
-					<Box id='route' sx={{ scrollMarginTop: 100 }}>
+					<Box
+						id='route'
+						sx={{
+							scrollMarginTop: 100,
+						}}
+					>
 						<Grid container spacing={3}>
 							<Grid size={{ xs: 12, lg: 8 }}>
 								<SurveyMap
@@ -161,7 +194,12 @@ export default function Home() {
 						</Grid>
 					</Box>
 
-					<Box id='data' sx={{ scrollMarginTop: 100 }}>
+					<Box
+						id='data'
+						sx={{
+							scrollMarginTop: 100,
+						}}
+					>
 						<SurveyTable
 							metric={metric}
 							mpdData={mpdData}
