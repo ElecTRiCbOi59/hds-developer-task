@@ -18,6 +18,7 @@ import {
 	useMap,
 } from 'react-leaflet'
 
+import { colours, shadows } from '@/theme/theme'
 import type {
 	MpdMeasurement,
 	SurveyMetric,
@@ -176,7 +177,7 @@ export const SurveyMap = ({
 					<Polyline
 						positions={route}
 						pathOptions={{
-							color: '#1877F2',
+							color: colours.primary,
 							weight: 4,
 							opacity: 0.8,
 						}}
@@ -187,8 +188,8 @@ export const SurveyMap = ({
 							center={activePosition}
 							radius={8}
 							pathOptions={{
-								color: '#fff',
-								fillColor: '#1877F2',
+								color: '#FFFFFF',
+								fillColor: colours.primary,
 								fillOpacity: 1,
 								weight: 3,
 							}}
@@ -215,7 +216,7 @@ export const SurveyMap = ({
 							width: 36,
 							height: 36,
 							bgcolor: 'background.paper',
-							boxShadow: '0 4px 12px rgba(28, 37, 46, 0.16)',
+							boxShadow: shadows.mapControl,
 							'&:hover': {
 								bgcolor: 'grey.100',
 							},

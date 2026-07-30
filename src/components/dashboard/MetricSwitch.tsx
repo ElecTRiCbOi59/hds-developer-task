@@ -1,7 +1,9 @@
 'use client'
 
 import { Button, Stack } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 
+import { shadows } from '@/theme/theme'
 import type { SurveyMetric } from '@/types/survey'
 
 type MetricSwitchProps = {
@@ -40,13 +42,15 @@ export const MetricSwitch = ({ value, onChange }: MetricSwitchProps) => {
 								: 'transparent',
 							fontSize: 13,
 							fontWeight: 700,
-							boxShadow: active
-								? '0 1px 3px rgba(145, 158, 171, 0.2)'
-								: 'none',
+							boxShadow: active ? shadows.control : 'none',
 							'&:hover': {
 								bgcolor: active
 									? 'background.paper'
-									: 'grey.200',
+									: (theme) =>
+											alpha(
+												theme.palette.common.white,
+												0.6,
+											),
 							},
 						}}
 					>

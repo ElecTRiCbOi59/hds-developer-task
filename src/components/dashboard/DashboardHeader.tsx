@@ -1,6 +1,8 @@
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import { Box, Chip, Stack, Typography } from '@mui/material'
 
+import { colours } from '@/theme/theme'
+
 export const DashboardHeader = () => {
 	return (
 		<Stack
@@ -18,7 +20,7 @@ export const DashboardHeader = () => {
 			}}
 		>
 			<Box>
-				<Typography variant='h4'>A602 Road Survey</Typography>
+				<Typography variant='h3'>A602 Road Survey</Typography>
 
 				<Typography
 					variant='body1'
@@ -35,6 +37,14 @@ export const DashboardHeader = () => {
 				icon={<CheckCircleRoundedIcon />}
 				label='Survey complete'
 				size='small'
+				sx={{
+					bgcolor: colours.successSoft,
+					color: colours.successText,
+					fontWeight: 700,
+					'& .MuiChip-icon': {
+						color: colours.success,
+					},
+				}}
 			/>
 		</Stack>
 	)

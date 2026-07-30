@@ -2,6 +2,7 @@
 
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined'
 import { Box, Card, Stack, Typography } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import { useMemo } from 'react'
 
 import type {
@@ -88,12 +89,20 @@ export const PointsOfInterest = ({
 								borderRadius: 2,
 								cursor: 'pointer',
 								bgcolor: active
-									? 'rgba(24, 119, 242, 0.08)'
+									? (theme) =>
+											alpha(
+												theme.palette.primary.main,
+												0.08,
+											)
 									: 'transparent',
 								transition: 'background-color 150ms ease',
 								'&:hover': {
 									bgcolor: active
-										? 'rgba(24, 119, 242, 0.1)'
+										? (theme) =>
+												alpha(
+													theme.palette.primary.main,
+													0.1,
+												)
 										: 'grey.100',
 								},
 							}}

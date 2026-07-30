@@ -1,5 +1,6 @@
 import type { ApexOptions } from 'apexcharts'
 
+import { colours } from '@/theme/theme'
 import type { MpdMeasurement, UkriMeasurement } from '@/types/survey'
 
 export const UKRI_BUCKET_SIZE = 20
@@ -117,7 +118,7 @@ export const getChartOptions = ({
 		enabled: false,
 	},
 	grid: {
-		borderColor: '#EEF0F3',
+		borderColor: colours.grid,
 		padding: {
 			left: isMobile ? 4 : 8,
 			right: isMobile ? 4 : 8,
@@ -129,7 +130,7 @@ export const getChartOptions = ({
 		labels: {
 			formatter: (value) => `${(Number(value) / 1000).toFixed(1)} km`,
 			style: {
-				colors: '#919EAB',
+				colors: colours.axis,
 				fontSize: isMobile ? '10px' : '12px',
 			},
 		},
@@ -139,7 +140,7 @@ export const getChartOptions = ({
 		labels: {
 			formatter: (value) => value.toFixed(1),
 			style: {
-				colors: '#919EAB',
+				colors: colours.axis,
 				fontSize: isMobile ? '10px' : '12px',
 			},
 		},
@@ -160,10 +161,10 @@ export const getChartOptions = ({
 				: [
 						{
 							x: selectedStart,
-							borderColor: '#1877F2',
+							borderColor: colours.primary,
 							strokeDashArray: 4,
 						},
 					],
 	},
-	colors: ['#1877F2'],
+	colors: [colours.primary],
 })

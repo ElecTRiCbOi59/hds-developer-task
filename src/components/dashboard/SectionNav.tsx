@@ -5,7 +5,10 @@ import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined'
 import MapOutlinedIcon from '@mui/icons-material/MapOutlined'
 import TableRowsOutlinedIcon from '@mui/icons-material/TableRowsOutlined'
 import { Box, ButtonBase, Stack } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import { useEffect, useRef, useState } from 'react'
+
+import { shadows } from '@/theme/theme'
 
 const sections = [
 	{ label: 'Overview', id: 'overview', icon: AssessmentOutlinedIcon },
@@ -138,8 +141,8 @@ export const SectionNav = () => {
 				border: '1px solid',
 				borderColor: 'divider',
 				borderRadius: 2.5,
-				bgcolor: 'rgba(255, 255, 255, 0.92)',
-				boxShadow: '0 8px 24px rgba(145, 158, 171, 0.12)',
+				bgcolor: (theme) => alpha(theme.palette.background.paper, 0.92),
+				boxShadow: shadows.floating,
 				backdropFilter: 'blur(12px)',
 			}}
 		>
@@ -171,7 +174,11 @@ export const SectionNav = () => {
 									? 'primary.main'
 									: 'text.secondary',
 								bgcolor: active
-									? 'rgba(24, 119, 242, 0.08)'
+									? (theme) =>
+											alpha(
+												theme.palette.primary.main,
+												0.08,
+											)
 									: 'transparent',
 								fontSize: 13,
 								fontWeight: 700,
@@ -179,7 +186,11 @@ export const SectionNav = () => {
 									'background-color 150ms ease, color 150ms ease',
 								'&:hover': {
 									bgcolor: active
-										? 'rgba(24, 119, 242, 0.1)'
+										? (theme) =>
+												alpha(
+													theme.palette.primary.main,
+													0.1,
+												)
 										: 'grey.100',
 									color: active
 										? 'primary.main'

@@ -1,6 +1,8 @@
 import { Box, Card, Stack, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
 
+import { colours } from '@/theme/theme'
+
 type MetricCardProps = {
 	label: string
 	value: string
@@ -43,13 +45,13 @@ export const MetricCard = ({
 
 					<Box
 						sx={{
-							width: 36,
-							height: 36,
+							width: 38,
+							height: 38,
 							display: 'grid',
 							placeItems: 'center',
 							borderRadius: 2,
-							bgcolor: 'grey.100',
-							color: 'text.secondary',
+							bgcolor: colours.primarySoft,
+							color: 'primary.main',
 						}}
 					>
 						{icon}
