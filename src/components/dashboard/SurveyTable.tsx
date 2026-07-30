@@ -3,6 +3,7 @@
 import {
 	Box,
 	Card,
+	Chip,
 	FormControl,
 	MenuItem,
 	Select,
@@ -15,9 +16,10 @@ import {
 	type GridColDef,
 	type GridPaginationModel,
 } from '@mui/x-data-grid'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import type {
+	ChartMode,
 	MpdMeasurement,
 	SurveyMetric,
 	UkriMeasurement,
@@ -25,15 +27,16 @@ import type {
 import { getSavedTablePageSize, saveTablePageSize } from '@/utils/preferences'
 
 type SurveyTableProps = {
-	metric: SurveyMetric
+	mode: ChartMode
 	mpdData: MpdMeasurement[]
 	ukriData: UkriMeasurement[]
 }
 
 type SurveyRow = {
 	id: string
+	metric: SurveyMetric
+	reference: number
 	track?: number
-	section: number
 	start: number
 	end: number
 	value: number
@@ -54,60 +57,71 @@ const coordinateColumn = (
 	valueFormatter: (value) => Number(value).toFixed(6),
 })
 
-export const SurveyTable = ({
-	metric,
-	mpdData,
-	ukriData,
-}: SurveyTableProps) => {
-	const isMpd = metric === 'mpd'
+const getRows = (
+	mode: ChartMode,
+	mpdData: MpdMeasurement[],
+	ukriData: UkriMeasurement[],
+): SurveyRow[] => {
+	const mpdRows = mpdData.map((item) => ({
+		id: `mpd-${item.section}`,
+		metric: 'mpd' as const,
+		reference: item.section,
+		start: item.start,
+		end: item.end,
+		value: item.mpd,
+		latitude: item.coordinates.latitude,
+		longitude: item.coordinates.longitude,
+	}))
 
+	const ukriRows = ukriData.map((item) => ({
+		id: `ukri-${item.track}-${item.segment}`,
+		metric: 'ukri' as const,
+		reference: item.segment,
+		track: item.track,
+		start: item.start,
+		end: item.end,
+		value: item.ukri,
+		latitude: item.coordinates.latitude,
+		longitude: item.coordinates.longitude,
+	}))
+
+	if (mode === 'mpd') return mpdRows
+	if (mode === 'ukri') return ukriRows
+
+	return [...mpdRows, ...ukriRows].sort((a, b) => {
+		if (a.start !== b.start) return a.start - b.start
+		return a.metric.localeCompare(b.metric)
+	})
+}
+
+export const SurveyTable = ({ mode, mpdData, ukriData }: SurveyTableProps) => {
 	const [paginationModel, setPaginationModel] = useState<GridPaginationModel>(
-		{
-			page: 0,
-			pageSize: 10,
-		},
-	)
-
-	useEffect(() => {
-		setPaginationModel({
+		() => ({
 			page: 0,
 			pageSize: getSavedTablePageSize(),
-		})
-	}, [])
+		}),
+	)
 
-	const rows = useMemo<SurveyRow[]>(
-		() =>
-			isMpd
-				? mpdData.map((item) => ({
-						id: `mpd-${item.section}`,
-						section: item.section,
-						start: item.start,
-						end: item.end,
-						value: item.mpd,
-						latitude: item.coordinates.latitude,
-						longitude: item.coordinates.longitude,
-					}))
-				: ukriData.map((item) => ({
-						id: `ukri-${item.track}-${item.segment}`,
-						track: item.track,
-						section: item.segment,
-						start: item.start,
-						end: item.end,
-						value: item.ukri,
-						latitude: item.coordinates.latitude,
-						longitude: item.coordinates.longitude,
-					})),
-		[isMpd, mpdData, ukriData],
+	const rows = useMemo(
+		() => getRows(mode, mpdData, ukriData),
+		[mode, mpdData, ukriData],
 	)
 
 	const columns = useMemo<GridColDef<SurveyRow>[]>(() => {
-		const measurementColumns: GridColDef<SurveyRow>[] = [
-			{
-				field: 'section',
-				headerName: isMpd ? 'Section' : 'Segment',
-				flex: 0.7,
-				minWidth: 95,
-			},
+		const referenceColumn: GridColDef<SurveyRow> = {
+			field: 'reference',
+			headerName:
+				mode === 'ukri'
+					? 'Segment'
+					: mode === 'mpd'
+						? 'Section'
+						: 'Ref',
+			flex: 0.7,
+			minWidth: 90,
+		}
+
+		const commonColumns: GridColDef<SurveyRow>[] = [
+			referenceColumn,
 			{
 				field: 'start',
 				headerName: 'Start',
@@ -124,35 +138,52 @@ export const SurveyTable = ({
 			},
 			{
 				field: 'value',
-				headerName: isMpd ? 'MPD' : 'UKRI',
+				headerName: 'Value',
 				flex: 0.9,
 				minWidth: 125,
-				valueFormatter: (value) =>
-					`${Number(value).toFixed(2)} ${isMpd ? 'mm' : 'm/km'}`,
+				sortable: mode !== 'combined',
+				renderCell: (params) =>
+					`${Number(params.value).toFixed(2)} ${params.row.metric === 'mpd' ? 'mm' : 'm/km'}`,
 			},
 			coordinateColumn('latitude', 'Latitude'),
 			coordinateColumn('longitude', 'Longitude'),
 		]
 
-		if (isMpd) return measurementColumns
+		if (mode === 'mpd') return commonColumns
 
-		return [
-			{
-				field: 'track',
-				headerName: 'Track',
-				flex: 0.6,
-				minWidth: 80,
-			},
-			...measurementColumns,
-		]
-	}, [isMpd])
+		const trackColumn: GridColDef<SurveyRow> = {
+			field: 'track',
+			headerName: 'Track',
+			flex: 0.55,
+			minWidth: 78,
+			valueFormatter: (value) => value ?? '—',
+		}
+
+		if (mode === 'ukri') {
+			return [trackColumn, ...commonColumns]
+		}
+
+		const methodColumn: GridColDef<SurveyRow> = {
+			field: 'metric',
+			headerName: 'Method',
+			flex: 0.7,
+			minWidth: 100,
+			renderCell: (params) => (
+				<Chip
+					label={params.row.metric.toUpperCase()}
+					size='small'
+					color={params.row.metric === 'ukri' ? 'success' : 'primary'}
+					variant='outlined'
+					sx={{ height: 22, fontSize: 10, fontWeight: 800 }}
+				/>
+			),
+		}
+
+		return [methodColumn, trackColumn, ...commonColumns]
+	}, [mode])
 
 	const changePageSize = (pageSize: number) => {
-		setPaginationModel({
-			page: 0,
-			pageSize,
-		})
-
+		setPaginationModel({ page: 0, pageSize })
 		saveTablePageSize(pageSize)
 	}
 
@@ -160,26 +191,17 @@ export const SurveyTable = ({
 		changePageSize(Number(event.target.value))
 	}
 
+	const description =
+		mode === 'combined'
+			? 'View MPD and UKRI readings together. Values keep their original units.'
+			: `View and sort the individual ${mode.toUpperCase()} measurements collected across the route.`
+
 	return (
-		<Card
-			sx={{
-				p: {
-					xs: 2,
-					sm: 3,
-				},
-				borderRadius: 3,
-			}}
-		>
+		<Card sx={{ p: { xs: 2, sm: 3 }, borderRadius: 3 }}>
 			<Stack
 				sx={{
-					flexDirection: {
-						xs: 'column',
-						sm: 'row',
-					},
-					alignItems: {
-						xs: 'stretch',
-						sm: 'flex-end',
-					},
+					flexDirection: { xs: 'column', sm: 'row' },
+					alignItems: { xs: 'stretch', sm: 'flex-end' },
 					justifyContent: 'space-between',
 					gap: 2,
 					mb: 2.5,
@@ -187,16 +209,11 @@ export const SurveyTable = ({
 			>
 				<Box>
 					<Typography variant='h6'>Survey data</Typography>
-
 					<Typography
 						variant='body2'
-						sx={{
-							mt: 0.5,
-							color: 'text.secondary',
-						}}
+						sx={{ mt: 0.5, color: 'text.secondary' }}
 					>
-						View and sort the individual {metric.toUpperCase()}{' '}
-						measurements collected across the route.
+						{description}
 					</Typography>
 				</Box>
 
@@ -204,20 +221,13 @@ export const SurveyTable = ({
 					sx={{
 						flexDirection: 'row',
 						alignItems: 'center',
-						justifyContent: 'flex-start',
-						alignSelf: {
-							xs: 'flex-start',
-							sm: 'auto',
-						},
+						alignSelf: { xs: 'flex-start', sm: 'auto' },
 						gap: 1,
 					}}
 				>
 					<Typography
 						variant='body2'
-						sx={{
-							color: 'text.secondary',
-							whiteSpace: 'nowrap',
-						}}
+						sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}
 					>
 						Rows per page
 					</Typography>
@@ -263,27 +273,20 @@ export const SurveyTable = ({
 					sx={{
 						border: 0,
 						bgcolor: 'background.paper',
-
 						'& .MuiDataGrid-columnHeaders': {
 							bgcolor: 'grey.50',
 							borderBottom: '1px solid',
 							borderColor: 'divider',
 						},
-
 						'& .MuiDataGrid-columnHeader, & .MuiDataGrid-cell': {
 							px: 2,
 						},
-
 						'& .MuiDataGrid-columnHeaderTitle': {
 							fontSize: 13,
 							fontWeight: 700,
 							color: 'text.secondary',
 						},
-
-						'& .MuiDataGrid-columnSeparator': {
-							display: 'none',
-						},
-
+						'& .MuiDataGrid-columnSeparator': { display: 'none' },
 						'& .MuiDataGrid-cell': {
 							borderBottom: '1px solid',
 							borderColor: 'divider',
@@ -291,22 +294,16 @@ export const SurveyTable = ({
 							color: 'text.primary',
 							outline: 'none',
 						},
-
-						'& .MuiDataGrid-row:hover': {
-							bgcolor: 'grey.50',
-						},
-
+						'& .MuiDataGrid-row:hover': { bgcolor: 'grey.50' },
 						'& .MuiDataGrid-footerContainer': {
 							minHeight: 56,
 							borderTop: '1px solid',
 							borderColor: 'divider',
 						},
-
 						'& .MuiTablePagination-selectLabel, & .MuiTablePagination-select':
 							{
 								display: 'none',
 							},
-
 						'& .MuiTablePagination-root': {
 							color: 'text.secondary',
 						},

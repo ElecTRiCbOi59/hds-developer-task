@@ -2,125 +2,204 @@ import { describe, expect, it } from '@jest/globals'
 
 import type { MpdMeasurement, UkriMeasurement } from '@/types/survey'
 import {
+	getAverageUkriChartData,
+	getCombinedChartSeries,
 	getMpdChartData,
-	getUkriChartData,
-	UKRI_BUCKET_SIZE,
+	getUkriTrackSeries,
 } from '@/utils/chart'
 
+const coordinates = {
+	latitude: 51,
+	longitude: 0,
+}
+
 describe('getMpdChartData', () => {
-	it('converts MPD measurements into chart points', () => {
+	it('converts MPD measurements into ordered chart points', () => {
 		const data: MpdMeasurement[] = [
-			{
-				section: 1,
-				start: 0,
-				end: 10,
-				mpd: 0.8,
-				coordinates: {
-					latitude: 51,
-					longitude: 0,
-				},
-			},
 			{
 				section: 2,
 				start: 10,
 				end: 20,
 				mpd: 1.1,
-				coordinates: {
-					latitude: 51,
-					longitude: 0,
-				},
+				coordinates,
+			},
+			{
+				section: 1,
+				start: 0,
+				end: 10,
+				mpd: 0.8,
+				coordinates,
 			},
 		]
 
 		expect(getMpdChartData(data)).toEqual([
+			{ x: 0, y: 0.8 },
+			{ x: 10, y: 1.1 },
+		])
+	})
+})
+
+describe('getUkriTrackSeries', () => {
+	it('keeps the supplied UKRI tracks as separate series', () => {
+		const data: UkriMeasurement[] = [
 			{
-				x: 0,
-				y: 0.8,
+				track: 2,
+				segment: 2,
+				start: 10,
+				end: 20,
+				ukri: 2.4,
+				coordinates,
 			},
 			{
-				x: 10,
-				y: 1.1,
+				track: 1,
+				segment: 1,
+				start: 0,
+				end: 10,
+				ukri: 1.2,
+				coordinates,
+			},
+			{
+				track: 2,
+				segment: 1,
+				start: 0,
+				end: 10,
+				ukri: 2,
+				coordinates,
+			},
+		]
+
+		const series = getUkriTrackSeries(data)
+
+		expect(
+			series.map(({ name, metric, track, data: points }) => ({
+				name,
+				metric,
+				track,
+				data: points,
+			})),
+		).toEqual([
+			{
+				name: 'Track 1',
+				metric: 'ukri',
+				track: 1,
+				data: [{ x: 0, y: 1.2 }],
+			},
+			{
+				name: 'Track 2',
+				metric: 'ukri',
+				track: 2,
+				data: [
+					{ x: 0, y: 2 },
+					{ x: 10, y: 2.4 },
+				],
 			},
 		])
 	})
 })
 
-describe('getUkriChartData', () => {
-	it(`averages UKRI readings into ${UKRI_BUCKET_SIZE} metre sections`, () => {
+describe('getAverageUkriChartData', () => {
+	it('averages UKRI tracks at each original survey position', () => {
 		const data: UkriMeasurement[] = [
 			{
 				track: 1,
 				segment: 1,
 				start: 0,
-				end: 5,
+				end: 10,
 				ukri: 1,
-				coordinates: {
-					latitude: 51,
-					longitude: 0,
-				},
+				coordinates,
+			},
+			{
+				track: 2,
+				segment: 1,
+				start: 0,
+				end: 10,
+				ukri: 3,
+				coordinates,
 			},
 			{
 				track: 1,
 				segment: 2,
 				start: 10,
-				end: 15,
-				ukri: 3,
-				coordinates: {
-					latitude: 51,
-					longitude: 0,
-				},
-			},
-			{
-				track: 1,
-				segment: 3,
-				start: 20,
-				end: 25,
+				end: 20,
 				ukri: 4,
-				coordinates: {
-					latitude: 51,
-					longitude: 0,
-				},
+				coordinates,
 			},
 		]
 
-		expect(getUkriChartData(data)).toEqual([
-			{
-				x: 0,
-				y: 2,
-			},
-			{
-				x: 20,
-				y: 4,
-			},
+		expect(getAverageUkriChartData(data)).toEqual([
+			{ x: 0, y: 2 },
+			{ x: 10, y: 4 },
 		])
 	})
+})
 
-	it('returns chart points ordered by distance', () => {
-		const data: UkriMeasurement[] = [
+describe('getCombinedChartSeries', () => {
+	it('uses matching route positions for MPD and average UKRI', () => {
+		const mpdData: MpdMeasurement[] = [
 			{
-				track: 1,
-				segment: 2,
-				start: 40,
-				end: 45,
-				ukri: 2,
-				coordinates: {
-					latitude: 51,
-					longitude: 0,
-				},
+				section: 1,
+				start: 0,
+				end: 10,
+				mpd: 0.8,
+				coordinates,
 			},
+			{
+				section: 2,
+				start: 10,
+				end: 20,
+				mpd: 1,
+				coordinates,
+			},
+		]
+
+		const ukriData: UkriMeasurement[] = [
 			{
 				track: 1,
 				segment: 1,
 				start: 0,
-				end: 5,
+				end: 10,
 				ukri: 1,
-				coordinates: {
-					latitude: 51,
-					longitude: 0,
-				},
+				coordinates,
+			},
+			{
+				track: 2,
+				segment: 1,
+				start: 0,
+				end: 10,
+				ukri: 3,
+				coordinates,
+			},
+			{
+				track: 1,
+				segment: 2,
+				start: 10,
+				end: 20,
+				ukri: 4,
+				coordinates,
 			},
 		]
 
-		expect(getUkriChartData(data).map((point) => point.x)).toEqual([0, 40])
+		const series = getCombinedChartSeries(mpdData, ukriData)
+
+		expect(
+			series.map(({ name, metric, data }) => ({ name, metric, data })),
+		).toEqual([
+			{
+				name: 'MPD (mm)',
+				metric: 'mpd',
+				data: [
+					{ x: 0, y: 0.8 },
+					{ x: 10, y: 1 },
+				],
+			},
+			{
+				name: 'Average UKRI (m/km)',
+				metric: 'ukri',
+				data: [
+					{ x: 0, y: 2 },
+					{ x: 10, y: 4 },
+				],
+			},
+		])
 	})
 })

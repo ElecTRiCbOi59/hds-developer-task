@@ -1,79 +1,134 @@
 import type { ApexOptions } from 'apexcharts'
 
 import { colours } from '@/theme/theme'
-import type { MpdMeasurement, UkriMeasurement } from '@/types/survey'
-
-export const UKRI_BUCKET_SIZE = 20
+import type {
+	MpdMeasurement,
+	SurveyMetric,
+	UkriMeasurement,
+} from '@/types/survey'
 
 export type ChartPoint = {
 	x: number
 	y: number
 }
 
-export const getMpdChartData = (data: MpdMeasurement[]): ChartPoint[] =>
-	data.map((item) => ({ x: item.start, y: item.mpd }))
+export type ChartSeries = {
+	name: string
+	data: ChartPoint[]
+	metric: SurveyMetric
+	color: string
+	track?: number
+}
 
-export const getUkriChartData = (data: UkriMeasurement[]): ChartPoint[] => {
-	const buckets = new Map<number, { total: number; count: number }>()
+const UKRI_TRACK_COLOURS = [
+	colours.success,
+	colours.successDark,
+	colours.primaryDark,
+	colours.primaryLight,
+]
+
+export const getMpdChartData = (data: MpdMeasurement[]): ChartPoint[] =>
+	data
+		.map((item) => ({ x: item.start, y: item.mpd }))
+		.sort((a, b) => a.x - b.x)
+
+export const getUkriTrackSeries = (data: UkriMeasurement[]): ChartSeries[] => {
+	const tracks = new Map<number, ChartPoint[]>()
 
 	data.forEach((item) => {
-		const start =
-			Math.floor(item.start / UKRI_BUCKET_SIZE) * UKRI_BUCKET_SIZE
-		const bucket = buckets.get(start) ?? { total: 0, count: 0 }
-
-		bucket.total += item.ukri
-		bucket.count += 1
-		buckets.set(start, bucket)
+		const points = tracks.get(item.track) ?? []
+		points.push({ x: item.start, y: item.ukri })
+		tracks.set(item.track, points)
 	})
 
-	return Array.from(buckets.entries())
-		.map(([x, bucket]) => ({
+	return Array.from(tracks.entries())
+		.sort(([trackA], [trackB]) => trackA - trackB)
+		.map(([track, points], index) => ({
+			name: `Track ${track}`,
+			metric: 'ukri',
+			track,
+			color: UKRI_TRACK_COLOURS[index % UKRI_TRACK_COLOURS.length],
+			data: points.sort((a, b) => a.x - b.x),
+		}))
+}
+
+export const getAverageUkriChartData = (
+	data: UkriMeasurement[],
+): ChartPoint[] => {
+	const distances = new Map<number, { total: number; count: number }>()
+
+	data.forEach((item) => {
+		const reading = distances.get(item.start) ?? { total: 0, count: 0 }
+		reading.total += item.ukri
+		reading.count += 1
+		distances.set(item.start, reading)
+	})
+
+	return Array.from(distances.entries())
+		.map(([x, reading]) => ({
 			x,
-			y: bucket.total / bucket.count,
+			y: reading.total / reading.count,
 		}))
 		.sort((a, b) => a.x - b.x)
 }
 
-export const getChartOptions = ({
-	data,
-	label,
-	unit,
-	selectedStart,
-	onSelect,
-	compact = false,
-}: {
-	data: ChartPoint[]
-	label: string
-	unit: string
-	selectedStart: number | null
-	onSelect: (start: number) => void
-	compact?: boolean
-}): ApexOptions => ({
+export const getCombinedChartSeries = (
+	mpdData: MpdMeasurement[],
+	ukriData: UkriMeasurement[],
+): ChartSeries[] => [
+	{
+		name: 'MPD (mm)',
+		metric: 'mpd',
+		color: colours.primary,
+		data: getMpdChartData(mpdData),
+	},
+	{
+		name: 'Average UKRI (m/km)',
+		metric: 'ukri',
+		color: colours.success,
+		data: getAverageUkriChartData(ukriData),
+	},
+]
+
+const formatValue = (
+	value: number | null | undefined,
+	decimalPlaces = 2,
+	unit?: string,
+) => {
+	if (typeof value !== 'number' || !Number.isFinite(value)) {
+		return ''
+	}
+
+	const formatted = value.toFixed(decimalPlaces)
+
+	return unit ? `${formatted} ${unit}` : formatted
+}
+
+const formatDistance = (
+	value: string | number | null | undefined,
+) => {
+	const distance = Number(value)
+
+	if (!Number.isFinite(distance)) {
+		return ''
+	}
+
+	return `${(distance / 1000).toFixed(2)} km along route`
+}
+
+const sharedOptions = (
+	selectedStart: number | null,
+	compact: boolean,
+): ApexOptions => ({
 	chart: {
-		type: 'area',
 		toolbar: { show: false },
 		zoom: { enabled: false },
 		fontFamily: 'inherit',
-		animations: { enabled: true, speed: 300 },
-		events: {
-			dataPointSelection: (_event, _chart, config) => {
-				const point = data[config?.dataPointIndex ?? -1]
-				if (point) onSelect(point.x)
-			},
+		animations: {
+			enabled: true,
+			speed: 300,
 		},
 	},
-	colors: [colours.primary],
-	stroke: { curve: 'smooth', width: compact ? 2 : 2.5 },
-	fill: {
-		type: 'gradient',
-		gradient: {
-			shadeIntensity: 0,
-			opacityFrom: 0.24,
-			opacityTo: 0.02,
-			stops: [0, 90, 100],
-		},
-	},
-	markers: { size: 0, hover: { size: compact ? 4 : 5 } },
 	dataLabels: { enabled: false },
 	grid: {
 		borderColor: colours.grid,
@@ -95,24 +150,15 @@ export const getChartOptions = ({
 				colors: colours.grey[500],
 				fontSize: compact ? '11px' : '12px',
 			},
-			formatter: (value: string) =>
-				`${(Number(value) / 1000).toFixed(1)} km`,
+			formatter: (value: string) => {
+				const distance = Number(value)
+
+				return Number.isFinite(distance)
+					? `${(distance / 1000).toFixed(1)} km`
+					: ''
+			},
 		},
 		tooltip: { enabled: false },
-	},
-	yaxis: {
-		min: 0,
-		tickAmount: compact ? 4 : 5,
-		labels: {
-			offsetX: compact ? 0 : -2,
-			minWidth: compact ? 28 : 0,
-			maxWidth: compact ? 34 : 160,
-			style: {
-				colors: colours.grey[500],
-				fontSize: compact ? '11px' : '12px',
-			},
-			formatter: (value: number) => value.toFixed(1),
-		},
 	},
 	annotations: {
 		xaxis:
@@ -126,15 +172,187 @@ export const getChartOptions = ({
 						},
 					],
 	},
-	tooltip: {
-		theme: 'light',
-		x: {
-			formatter: (value: number) =>
-				`${(value / 1000).toFixed(2)} km along route`,
+	legend: {
+		show: false,
+	},
+})
+
+const distanceTooltip = {
+	x: {
+		formatter: (value: string | number) => formatDistance(value),
+	},
+}
+
+export const getMpdChartOptions = ({
+	data,
+	selectedStart,
+	onSelect,
+	compact = false,
+}: {
+	data: ChartPoint[]
+	selectedStart: number | null
+	onSelect: (start: number) => void
+	compact?: boolean
+}): ApexOptions => ({
+	...sharedOptions(selectedStart, compact),
+	chart: {
+		...sharedOptions(selectedStart, compact).chart,
+		type: 'line',
+		events: {
+			dataPointSelection: (_event, _chart, config) => {
+				const point = data[config?.dataPointIndex ?? -1]
+
+				if (point) onSelect(point.x)
+			},
 		},
+	},
+	colors: [colours.primary],
+	stroke: {
+		curve: 'smooth',
+		width: compact ? 2 : 2.5,
+	},
+	markers: {
+		size: 0,
+		hover: { size: compact ? 4 : 5 },
+	},
+	yaxis: {
+		min: 0,
+		tickAmount: compact ? 4 : 5,
+		labels: {
+			style: {
+				colors: colours.grey[500],
+				fontSize: compact ? '11px' : '12px',
+			},
+			formatter: (value?: number) => formatValue(value, 1),
+		},
+	},
+	tooltip: {
+		...distanceTooltip,
+		theme: 'light',
 		y: {
-			formatter: (value: number) => `${value.toFixed(2)} ${unit}`,
-			title: { formatter: () => label },
+			formatter: (value?: number) => formatValue(value, 2, 'mm'),
 		},
 	},
 })
+
+export const getUkriChartOptions = ({
+	series,
+	selectedStart,
+	onSelect,
+	compact = false,
+}: {
+	series: ChartSeries[]
+	selectedStart: number | null
+	onSelect: (start: number, track: number) => void
+	compact?: boolean
+}): ApexOptions => ({
+	...sharedOptions(selectedStart, compact),
+	chart: {
+		...sharedOptions(selectedStart, compact).chart,
+		type: 'line',
+		events: {
+			dataPointSelection: (_event, _chart, config) => {
+				const activeSeries = series[config?.seriesIndex ?? -1]
+				const point = activeSeries?.data[config?.dataPointIndex ?? -1]
+
+				if (point && activeSeries.track) {
+					onSelect(point.x, activeSeries.track)
+				}
+			},
+		},
+	},
+	colors: series.map((item) => item.color),
+	stroke: {
+		curve: 'smooth',
+		width: compact ? 1.75 : 2.25,
+	},
+	markers: {
+		size: 0,
+		hover: { size: compact ? 4 : 5 },
+	},
+	yaxis: {
+		min: 0,
+		tickAmount: compact ? 4 : 5,
+		labels: {
+			style: {
+				colors: colours.grey[500],
+				fontSize: compact ? '11px' : '12px',
+			},
+			formatter: (value?: number) => formatValue(value, 1),
+		},
+	},
+	tooltip: {
+		...distanceTooltip,
+		theme: 'light',
+		shared: true,
+		intersect: false,
+		y: {
+			formatter: (value?: number) => formatValue(value, 2, 'm/km'),
+		},
+	},
+})
+
+export const getCombinedChartOptions = ({
+	series,
+	selectedStart,
+	onSelect,
+	compact = false,
+}: {
+	series: ChartSeries[]
+	selectedStart: number | null
+	onSelect: (metric: SurveyMetric, start: number) => void
+	compact?: boolean
+}): ApexOptions => {
+	const showBothAxes = series.length > 1
+
+	return {
+		...sharedOptions(selectedStart, compact),
+		chart: {
+			...sharedOptions(selectedStart, compact).chart,
+			type: 'line',
+			events: {
+				dataPointSelection: (_event, _chart, config) => {
+					const activeSeries = series[config?.seriesIndex ?? -1]
+					const point = activeSeries?.data[config?.dataPointIndex ?? -1]
+
+					if (point && activeSeries) {
+						onSelect(activeSeries.metric, point.x)
+					}
+				},
+			},
+		},
+		colors: series.map((item) => item.color),
+		stroke: {
+			curve: 'smooth',
+			width: compact ? 2 : 2.5,
+		},
+		markers: {
+			size: 0,
+			hover: { size: compact ? 4 : 5 },
+		},
+		yaxis: series.map((item) => ({
+			seriesName: item.name,
+			opposite: showBothAxes && item.metric === 'ukri',
+			min: 0,
+			tickAmount: compact ? 4 : 5,
+			labels: {
+				style: {
+					colors: item.color,
+					fontSize: compact ? '11px' : '12px',
+				},
+				formatter: (value?: number) => formatValue(value, 1),
+			},
+		})),
+		tooltip: {
+			...distanceTooltip,
+			theme: 'light',
+			shared: true,
+			intersect: false,
+			// The series names carry the units, so one safe formatter works
+			// whether both series are visible or one has been hidden.
+			y: {
+				formatter: (value?: number) => formatValue(value, 2),
+			},
+		},
+	}
+}

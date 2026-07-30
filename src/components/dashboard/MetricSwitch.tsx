@@ -2,15 +2,15 @@ import { Box, ButtonBase } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 
 import { shadows } from '@/theme/theme'
-
-import type { SurveyMetric } from '@/types/survey'
+import type { ChartMode } from '@/types/survey'
 
 type MetricSwitchProps = {
-	value: SurveyMetric
-	onChange: (value: SurveyMetric) => void
+	value: ChartMode
+	onChange: (value: ChartMode) => void
 }
 
-const metrics: { label: string; value: SurveyMetric }[] = [
+const modes: { label: string; value: ChartMode }[] = [
+	{ label: 'Combined', value: 'combined' },
 	{ label: 'MPD', value: 'mpd' },
 	{ label: 'UKRI', value: 'ukri' },
 ]
@@ -28,17 +28,17 @@ export const MetricSwitch = ({ value, onChange }: MetricSwitchProps) => {
 				bgcolor: 'grey.200',
 			}}
 		>
-			{metrics.map((metric) => {
-				const active = value === metric.value
+			{modes.map((mode) => {
+				const active = value === mode.value
 
 				return (
 					<ButtonBase
-						key={metric.value}
-						onClick={() => onChange(metric.value)}
+						key={mode.value}
+						onClick={() => onChange(mode.value)}
 						aria-pressed={active}
 						sx={{
 							height: 30,
-							minWidth: 58,
+							minWidth: mode.value === 'combined' ? 76 : 58,
 							px: 1.25,
 							borderRadius: 1,
 							color: active ? 'text.primary' : 'text.secondary',
@@ -62,7 +62,7 @@ export const MetricSwitch = ({ value, onChange }: MetricSwitchProps) => {
 							},
 						}}
 					>
-						{metric.label}
+						{mode.label}
 					</ButtonBase>
 				)
 			})}

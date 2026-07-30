@@ -4,7 +4,9 @@ import MyLocationRoundedIcon from '@mui/icons-material/MyLocationRounded'
 import {
 	Box,
 	Card,
+	Chip,
 	IconButton,
+	Stack,
 	Tooltip as MuiTooltip,
 	Typography,
 	useMediaQuery,
@@ -22,14 +24,14 @@ import {
 
 import { colours, shadows } from '@/theme/theme'
 import type {
+	ChartMode,
 	MpdMeasurement,
-	SurveyMetric,
 	SurveySelection,
 	UkriMeasurement,
 } from '@/types/survey'
 
 type SurveyMapProps = {
-	metric: SurveyMetric
+	mode: ChartMode
 	selected: SurveySelection | null
 	highlighted: SurveySelection | null
 	mpdData: MpdMeasurement[]
@@ -39,15 +41,20 @@ type SurveyMapProps = {
 
 type Position = [number, number]
 
+type UkriRoute = {
+	track: number
+	positions: Position[]
+}
+
 type MapControllerProps = {
-	route: Position[]
+	positions: Position[]
 	resetKey: number
 	selectedPosition?: Position
 	compact: boolean
 }
 
 const MapController = ({
-	route,
+	positions,
 	resetKey,
 	selectedPosition,
 	compact,
@@ -55,12 +62,12 @@ const MapController = ({
 	const map = useMap()
 
 	useEffect(() => {
-		if (selectedPosition || route.length <= 1) return
+		if (selectedPosition || positions.length <= 1) return
 
-		map.fitBounds(route, {
+		map.fitBounds(positions, {
 			padding: compact ? [12, 12] : [28, 28],
 		})
-	}, [compact, map, resetKey, route, selectedPosition])
+	}, [compact, map, positions, resetKey, selectedPosition])
 
 	useEffect(() => {
 		if (!selectedPosition) return
@@ -73,8 +80,13 @@ const MapController = ({
 	return null
 }
 
+const toPosition = (coordinates: {
+	latitude: number
+	longitude: number
+}): Position => [coordinates.latitude, coordinates.longitude]
+
 export const SurveyMap = ({
-	metric,
+	mode,
 	selected,
 	highlighted,
 	mpdData,
@@ -83,43 +95,51 @@ export const SurveyMap = ({
 }: SurveyMapProps) => {
 	const theme = useTheme()
 	const compact = useMediaQuery(theme.breakpoints.down('sm'))
-
 	const [resetKey, setResetKey] = useState(0)
 
-	const route = useMemo(() => {
-		const source =
-			metric === 'mpd'
-				? mpdData
-				: ukriData.filter((item) => item.track === 1)
+	const mpdRoute = useMemo(
+		() => mpdData.map((item) => toPosition(item.coordinates)),
+		[mpdData],
+	)
 
-		return source.map(
-			(item) =>
-				[
-					item.coordinates.latitude,
-					item.coordinates.longitude,
-				] as Position,
-		)
-	}, [metric, mpdData, ukriData])
+	const ukriRoutes = useMemo<UkriRoute[]>(() => {
+		const tracks = new Map<number, Position[]>()
+
+		ukriData.forEach((item) => {
+			const positions = tracks.get(item.track) ?? []
+			positions.push(toPosition(item.coordinates))
+			tracks.set(item.track, positions)
+		})
+
+		return Array.from(tracks.entries())
+			.sort(([trackA], [trackB]) => trackA - trackB)
+			.map(([track, positions]) => ({ track, positions }))
+	}, [ukriData])
+
+	const visiblePositions = useMemo(() => {
+		if (mode === 'mpd') return mpdRoute
+		if (mode === 'ukri')
+			return ukriRoutes.flatMap((route) => route.positions)
+
+		return [...mpdRoute, ...ukriRoutes.flatMap((route) => route.positions)]
+	}, [mode, mpdRoute, ukriRoutes])
 
 	const active = highlighted ?? selected
+	const activeMetric = active?.metric
 
-	const activePosition = active?.coordinates
-		? ([
-				active.coordinates.latitude,
-				active.coordinates.longitude,
-			] as Position)
+	const focusedMetric =
+		mode === 'combined'
+			? (highlighted?.metric ?? selected?.metric)
+			: undefined
+
+	const activePosition = active ? toPosition(active.coordinates) : undefined
+	const selectedPosition = selected
+		? toPosition(selected.coordinates)
 		: undefined
 
-	const selectedPosition = selected?.coordinates
-		? ([
-				selected.coordinates.latitude,
-				selected.coordinates.longitude,
-			] as Position)
-		: undefined
-
-	const centre: Position = route[Math.floor(route.length / 2)] ?? [
-		51.9409, -0.2742,
-	]
+	const centre: Position = visiblePositions[
+		Math.floor(visiblePositions.length / 2)
+	] ?? [51.9409, -0.2742]
 
 	const handleMarkerClick = (selection: SurveySelection) => {
 		if (selected?.id === selection.id) {
@@ -136,26 +156,58 @@ export const SurveyMap = ({
 		setResetKey((value) => value + 1)
 	}
 
-	return (
-		<Card
-			sx={{
-				p: 3,
-				borderRadius: 3,
-				height: '100%',
-			}}
-		>
-			<Box sx={{ mb: 2 }}>
-				<Typography variant='h6'>Survey route</Typography>
+	const markerColour =
+		activeMetric === 'ukri' ? colours.success : colours.primary
 
-				<Typography
-					variant='body2'
+	const showMpdRoute =
+		mode === 'mpd' || (mode === 'combined' && focusedMetric !== 'ukri')
+
+	const showUkriRoutes =
+		mode === 'ukri' || (mode === 'combined' && focusedMetric !== 'mpd')
+
+	const showingBothRoutes = mode === 'combined' && !focusedMetric
+
+	return (
+		<Card sx={{ p: 3, borderRadius: 3, height: '100%' }}>
+			<Box sx={{ mb: 2 }}>
+				<Stack
 					sx={{
-						mt: 0.5,
-						color: 'text.secondary',
+						flexDirection: { xs: 'column', sm: 'row' },
+						alignItems: { xs: 'flex-start', sm: 'center' },
+						justifyContent: 'space-between',
+						gap: 1,
 					}}
 				>
-					GPS positions from the supplied survey data.
-				</Typography>
+					<Box>
+						<Typography variant='h6'>Survey route</Typography>
+						<Typography
+							variant='body2'
+							sx={{ mt: 0.5, color: 'text.secondary' }}
+						>
+							{mode === 'combined'
+								? 'MPD route and all four supplied UKRI tracks.'
+								: mode === 'ukri'
+									? 'All four UKRI tracks from the supplied GPS data.'
+									: 'MPD GPS positions from the supplied survey data.'}
+						</Typography>
+					</Box>
+
+					{mode === 'combined' && (
+						<Stack sx={{ flexDirection: 'row', gap: 0.75 }}>
+							<Chip
+								label='MPD'
+								size='small'
+								sx={{ color: 'primary.main', fontWeight: 700 }}
+							/>
+							<Chip
+								label='UKRI'
+								size='small'
+								color='success'
+								sx={{ fontWeight: 700 }}
+							/>
+						</Stack>
+					)}
+				</Stack>
 			</Box>
 
 			<Box
@@ -173,7 +225,7 @@ export const SurveyMap = ({
 			>
 				<MapContainer center={centre} zoom={14} scrollWheelZoom={false}>
 					<MapController
-						route={route}
+						positions={visiblePositions}
 						resetKey={resetKey}
 						selectedPosition={selectedPosition}
 						compact={compact}
@@ -184,22 +236,41 @@ export const SurveyMap = ({
 						url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
 					/>
 
-					<Polyline
-						positions={route}
-						pathOptions={{
-							color: colours.primary,
-							weight: 4,
-							opacity: 0.8,
-						}}
-					/>
+					{showMpdRoute && (
+						<Polyline
+							key={`mpd-${mode}-${focusedMetric ?? 'all'}`}
+							positions={mpdRoute}
+							pathOptions={{
+								color: colours.primary,
+								weight: showingBothRoutes ? 5 : 4.5,
+								opacity: 0.9,
+							}}
+						/>
+					)}
+
+					{showUkriRoutes &&
+						ukriRoutes.map((route) => (
+							<Polyline
+								key={`ukri-${route.track}-${mode}-${focusedMetric ?? 'all'}`}
+								positions={route.positions}
+								pathOptions={{
+									color: colours.success,
+									weight: showingBothRoutes ? 3 : 3.5,
+									opacity: showingBothRoutes ? 0.9 : 0.8,
+									dashArray: showingBothRoutes
+										? '8 8'
+										: undefined,
+								}}
+							/>
+						))}
 
 					{active && activePosition && (
 						<CircleMarker
 							center={activePosition}
 							radius={8}
 							pathOptions={{
-								color: '#FFFFFF',
-								fillColor: colours.primary,
+								color: colours.white,
+								fillColor: markerColour,
 								fillOpacity: 1,
 								weight: 3,
 							}}
@@ -208,6 +279,7 @@ export const SurveyMap = ({
 							}}
 						>
 							<Tooltip permanent direction='top'>
+								{active.metric.toUpperCase()} ·{' '}
 								{(active.start / 1000).toFixed(2)} km
 							</Tooltip>
 						</CircleMarker>
@@ -227,16 +299,10 @@ export const SurveyMap = ({
 							height: 36,
 							bgcolor: 'background.paper',
 							boxShadow: shadows.mapControl,
-							'&:hover': {
-								bgcolor: 'grey.100',
-							},
+							'&:hover': { bgcolor: 'grey.100' },
 						}}
 					>
-						<MyLocationRoundedIcon
-							sx={{
-								fontSize: 19,
-							}}
-						/>
+						<MyLocationRoundedIcon sx={{ fontSize: 19 }} />
 					</IconButton>
 				</MuiTooltip>
 			</Box>

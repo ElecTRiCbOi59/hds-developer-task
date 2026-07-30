@@ -9,7 +9,7 @@ import {
 	Stack,
 } from '@mui/material'
 import dynamic from 'next/dynamic'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { PointsOfInterest } from '@/components/dashboard/PointsOfInterest'
@@ -18,9 +18,13 @@ import { SurveyChart } from '@/components/dashboard/SurveyChart'
 import { SurveyOverview } from '@/components/dashboard/SurveyOverview'
 import { SurveyTable } from '@/components/dashboard/SurveyTable'
 import { useSurveyData } from '@/hooks/useSurveyData'
-import type { SurveyMetric, SurveySelection } from '@/types/survey'
-import { UKRI_BUCKET_SIZE } from '@/utils/chart'
-import { getSavedMetric, saveMetric } from '@/utils/preferences'
+import type {
+	ChartMode,
+	Coordinates,
+	SurveyMetric,
+	SurveySelection,
+} from '@/types/survey'
+import { getSavedChartMode, saveChartMode } from '@/utils/preferences'
 
 const SurveyMap = dynamic(
 	() =>
@@ -30,70 +34,86 @@ const SurveyMap = dynamic(
 	{ ssr: false },
 )
 
+const averageCoordinates = (coordinates: Coordinates[]): Coordinates => ({
+	latitude:
+		coordinates.reduce((total, item) => total + item.latitude, 0) /
+		coordinates.length,
+	longitude:
+		coordinates.reduce((total, item) => total + item.longitude, 0) /
+		coordinates.length,
+})
+
 export default function Home() {
 	const { mpdData, ukriData, loading, error } = useSurveyData()
-
-	const [metric, setMetric] = useState<SurveyMetric | null>(null)
+	const [mode, setMode] = useState<ChartMode>(() => getSavedChartMode())
 	const [selected, setSelected] = useState<SurveySelection | null>(null)
 	const [highlighted, setHighlighted] = useState<SurveySelection | null>(null)
 
-	useEffect(() => {
-		setMetric(getSavedMetric())
-	}, [])
-
-	const changeMetric = (nextMetric: SurveyMetric) => {
-		setMetric(nextMetric)
+	const changeMode = (nextMode: ChartMode) => {
+		setMode(nextMode)
 		setSelected(null)
 		setHighlighted(null)
-		saveMetric(nextMetric)
+		saveChartMode(nextMode)
 	}
 
-	const selectChartPoint = (start: number) => {
-		if (!metric) return
-
+	const selectChartPoint = (
+		metric: SurveyMetric,
+		start: number,
+		track?: number,
+	) => {
 		if (metric === 'mpd') {
 			const measurement = mpdData.find((item) => item.start === start)
-
 			if (!measurement) return
 
 			const selection: SurveySelection = {
 				id: `mpd-${measurement.section}`,
+				metric: 'mpd',
 				start: measurement.start,
 				value: measurement.mpd,
 				coordinates: measurement.coordinates,
 			}
 
 			setSelected(selected?.id === selection.id ? null : selection)
-
 			return
 		}
 
-		const measurement =
-			ukriData.find(
-				(item) =>
-					item.track === 1 &&
-					item.start >= start &&
-					item.start < start + UKRI_BUCKET_SIZE,
-			) ??
-			ukriData.find(
-				(item) =>
-					item.start >= start &&
-					item.start < start + UKRI_BUCKET_SIZE,
+		if (track) {
+			const measurement = ukriData.find(
+				(item) => item.start === start && item.track === track,
 			)
+			if (!measurement) return
 
-		if (!measurement) return
+			const selection: SurveySelection = {
+				id: `ukri-${measurement.track}-${measurement.segment}`,
+				metric: 'ukri',
+				start: measurement.start,
+				value: measurement.ukri,
+				coordinates: measurement.coordinates,
+			}
+
+			setSelected(selected?.id === selection.id ? null : selection)
+			return
+		}
+
+		const measurements = ukriData.filter((item) => item.start === start)
+		if (measurements.length === 0) return
 
 		const selection: SurveySelection = {
-			id: `ukri-${measurement.track}-${measurement.segment}`,
+			id: `ukri-average-${start}`,
+			metric: 'ukri',
 			start,
-			value: measurement.ukri,
-			coordinates: measurement.coordinates,
+			value:
+				measurements.reduce((total, item) => total + item.ukri, 0) /
+				measurements.length,
+			coordinates: averageCoordinates(
+				measurements.map((item) => item.coordinates),
+			),
 		}
 
 		setSelected(selected?.id === selection.id ? null : selection)
 	}
 
-	if (loading || !metric) {
+	if (loading) {
 		return (
 			<Box
 				sx={{
@@ -109,15 +129,7 @@ export default function Home() {
 
 	if (error) {
 		return (
-			<Container
-				maxWidth='xl'
-				sx={{
-					py: {
-						xs: 3,
-						md: 5,
-					},
-				}}
-			>
+			<Container maxWidth='xl' sx={{ py: { xs: 3, md: 5 } }}>
 				<Alert severity='error'>{error}</Alert>
 			</Container>
 		)
@@ -128,23 +140,12 @@ export default function Home() {
 			component='main'
 			sx={{
 				minHeight: '100vh',
-				py: {
-					xs: 3,
-					md: 5,
-				},
+				py: { xs: 3, md: 5 },
 			}}
 		>
 			<Container maxWidth='xl'>
-				<Stack
-					sx={{
-						gap: {
-							xs: 3,
-							md: 4,
-						},
-					}}
-				>
+				<Stack sx={{ gap: { xs: 3, md: 4 } }}>
 					<DashboardHeader />
-
 					<SectionNav />
 
 					<Box id='overview' sx={{ scrollMarginTop: 92 }}>
@@ -153,8 +154,8 @@ export default function Home() {
 
 					<Box id='measurements' sx={{ scrollMarginTop: 92 }}>
 						<SurveyChart
-							metric={metric}
-							onMetricChange={changeMetric}
+							mode={mode}
+							onModeChange={changeMode}
 							selectedStart={selected?.start ?? null}
 							onSelect={selectChartPoint}
 							mpdData={mpdData}
@@ -166,7 +167,7 @@ export default function Home() {
 						<Grid container spacing={3}>
 							<Grid size={{ xs: 12, lg: 8 }}>
 								<SurveyMap
-									metric={metric}
+									mode={mode}
 									selected={selected}
 									highlighted={highlighted}
 									mpdData={mpdData}
@@ -177,7 +178,7 @@ export default function Home() {
 
 							<Grid size={{ xs: 12, lg: 4 }}>
 								<PointsOfInterest
-									metric={metric}
+									mode={mode}
 									selected={selected}
 									mpdData={mpdData}
 									ukriData={ukriData}
@@ -190,7 +191,8 @@ export default function Home() {
 
 					<Box id='data' sx={{ scrollMarginTop: 92 }}>
 						<SurveyTable
-							metric={metric}
+							key={mode}
+							mode={mode}
 							mpdData={mpdData}
 							ukriData={ukriData}
 						/>

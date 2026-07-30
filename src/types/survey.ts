@@ -39,9 +39,12 @@ export type MpdMeasurement = {
 
 export type SurveyMetric = 'mpd' | 'ukri'
 
+export type ChartMode = 'combined' | SurveyMetric
+
 export type SurveySelection = {
 	id: string
+	metric: SurveyMetric
 	start: number
 	value: number
-	coordinates?: Coordinates
+	coordinates: Coordinates
 }
