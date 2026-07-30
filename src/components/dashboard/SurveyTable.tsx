@@ -15,13 +15,14 @@ import {
 	type GridColDef,
 	type GridPaginationModel,
 } from '@mui/x-data-grid'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import type {
 	MpdMeasurement,
 	SurveyMetric,
 	UkriMeasurement,
 } from '@/types/survey'
+import { getSavedTablePageSize, saveTablePageSize } from '@/utils/preferences'
 
 type SurveyTableProps = {
 	metric: SurveyMetric
@@ -66,6 +67,13 @@ export const SurveyTable = ({
 			pageSize: 10,
 		},
 	)
+
+	useEffect(() => {
+		setPaginationModel({
+			page: 0,
+			pageSize: getSavedTablePageSize(),
+		})
+	}, [])
 
 	const rows = useMemo<SurveyRow[]>(
 		() =>
@@ -126,9 +134,7 @@ export const SurveyTable = ({
 			coordinateColumn('longitude', 'Longitude'),
 		]
 
-		if (isMpd) {
-			return measurementColumns
-		}
+		if (isMpd) return measurementColumns
 
 		return [
 			{
@@ -146,6 +152,8 @@ export const SurveyTable = ({
 			page: 0,
 			pageSize,
 		})
+
+		saveTablePageSize(pageSize)
 	}
 
 	const handlePageSizeChange = (event: SelectChangeEvent<number>) => {
