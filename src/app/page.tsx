@@ -9,7 +9,7 @@ import {
 	Stack,
 } from '@mui/material'
 import dynamic from 'next/dynamic'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { PointsOfInterest } from '@/components/dashboard/PointsOfInterest'
@@ -20,6 +20,7 @@ import { SurveyTable } from '@/components/dashboard/SurveyTable'
 import { useSurveyData } from '@/hooks/useSurveyData'
 import type { SurveyMetric, SurveySelection } from '@/types/survey'
 import { UKRI_BUCKET_SIZE } from '@/utils/chart'
+import { getSavedMetric, saveMetric } from '@/utils/preferences'
 
 const SurveyMap = dynamic(
 	() =>
@@ -31,17 +32,25 @@ const SurveyMap = dynamic(
 
 export default function Home() {
 	const { mpdData, ukriData, loading, error } = useSurveyData()
-	const [metric, setMetric] = useState<SurveyMetric>('mpd')
+
+	const [metric, setMetric] = useState<SurveyMetric | null>(null)
 	const [selected, setSelected] = useState<SurveySelection | null>(null)
 	const [highlighted, setHighlighted] = useState<SurveySelection | null>(null)
+
+	useEffect(() => {
+		setMetric(getSavedMetric())
+	}, [])
 
 	const changeMetric = (nextMetric: SurveyMetric) => {
 		setMetric(nextMetric)
 		setSelected(null)
 		setHighlighted(null)
+		saveMetric(nextMetric)
 	}
 
 	const selectChartPoint = (start: number) => {
+		if (!metric) return
+
 		if (metric === 'mpd') {
 			const measurement = mpdData.find((item) => item.start === start)
 
@@ -55,6 +64,7 @@ export default function Home() {
 			}
 
 			setSelected(selected?.id === selection.id ? null : selection)
+
 			return
 		}
 
@@ -83,7 +93,7 @@ export default function Home() {
 		setSelected(selected?.id === selection.id ? null : selection)
 	}
 
-	if (loading) {
+	if (loading || !metric) {
 		return (
 			<Box
 				sx={{
@@ -99,17 +109,42 @@ export default function Home() {
 
 	if (error) {
 		return (
-			<Container maxWidth='xl' sx={{ py: 4 }}>
+			<Container
+				maxWidth='xl'
+				sx={{
+					py: {
+						xs: 3,
+						md: 5,
+					},
+				}}
+			>
 				<Alert severity='error'>{error}</Alert>
 			</Container>
 		)
 	}
 
 	return (
-		<Box component='main' sx={{ minHeight: '100vh', py: { xs: 3, md: 5 } }}>
+		<Box
+			component='main'
+			sx={{
+				minHeight: '100vh',
+				py: {
+					xs: 3,
+					md: 5,
+				},
+			}}
+		>
 			<Container maxWidth='xl'>
-				<Stack sx={{ gap: { xs: 3, md: 4 } }}>
+				<Stack
+					sx={{
+						gap: {
+							xs: 3,
+							md: 4,
+						},
+					}}
+				>
 					<DashboardHeader />
+
 					<SectionNav />
 
 					<Box id='overview' sx={{ scrollMarginTop: 92 }}>
@@ -134,9 +169,9 @@ export default function Home() {
 									metric={metric}
 									selected={selected}
 									highlighted={highlighted}
-									onSelect={setSelected}
 									mpdData={mpdData}
 									ukriData={ukriData}
+									onSelect={setSelected}
 								/>
 							</Grid>
 
@@ -144,10 +179,10 @@ export default function Home() {
 								<PointsOfInterest
 									metric={metric}
 									selected={selected}
-									onSelect={setSelected}
-									onHover={setHighlighted}
 									mpdData={mpdData}
 									ukriData={ukriData}
+									onSelect={setSelected}
+									onHover={setHighlighted}
 								/>
 							</Grid>
 						</Grid>

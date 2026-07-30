@@ -1,7 +1,7 @@
 'use client'
 
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined'
-import { Box, ButtonBase, Card, Stack, Typography } from '@mui/material'
+import { Box, ButtonBase, Card, Chip, Stack, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 
 import type {
@@ -21,7 +21,6 @@ type PointsOfInterestProps = {
 }
 
 type PointOfInterest = SurveySelection & {
-	value: number
 	unit: string
 }
 
@@ -41,8 +40,8 @@ export const PointsOfInterest = ({
 					.map((item) => ({
 						id: `mpd-${item.section}`,
 						start: item.start,
-						coordinates: item.coordinates,
 						value: item.mpd,
+						coordinates: item.coordinates,
 						unit: 'mm',
 					}))
 			: [...ukriData]
@@ -51,21 +50,52 @@ export const PointsOfInterest = ({
 					.map((item) => ({
 						id: `ukri-${item.track}-${item.segment}`,
 						start: item.start,
-						coordinates: item.coordinates,
 						value: item.ukri,
+						coordinates: item.coordinates,
 						unit: 'm/km',
 					}))
 
 	return (
-		<Card sx={{ p: 3, borderRadius: 3, height: '100%' }}>
+		<Card
+			sx={{
+				p: 3,
+				borderRadius: 3,
+				height: '100%',
+			}}
+		>
 			<Box sx={{ mb: 2.5 }}>
-				<Typography variant='h6'>Highest measurements</Typography>
+				<Stack
+					sx={{
+						flexDirection: 'row',
+						alignItems: 'center',
+						gap: 1,
+					}}
+				>
+					<Typography variant='h6'>Points of interest</Typography>
+
+					<Chip
+						label='Top 5'
+						size='small'
+						sx={{
+							height: 22,
+							bgcolor: 'grey.100',
+							color: 'text.secondary',
+							fontSize: 11,
+							fontWeight: 700,
+						}}
+					/>
+				</Stack>
+
 				<Typography
 					variant='body2'
-					sx={{ mt: 0.5, color: 'text.secondary' }}
+					sx={{
+						mt: 0.5,
+						color: 'text.secondary',
+					}}
 				>
-					Hover to preview a location, or select it to keep it
-					highlighted.
+					Highest {metric.toUpperCase()} measurements recorded across
+					the route. Hover to preview a location, or select it to keep
+					it highlighted.
 				</Typography>
 			</Box>
 
@@ -124,13 +154,25 @@ export const PointsOfInterest = ({
 								{String(index + 1).padStart(2, '0')}
 							</Box>
 
-							<Box sx={{ flex: 1, ml: 1.25 }}>
-								<Typography sx={{ fontWeight: 700 }}>
+							<Box
+								sx={{
+									flex: 1,
+									ml: 1.25,
+								}}
+							>
+								<Typography
+									sx={{
+										fontWeight: 700,
+									}}
+								>
 									{point.value.toFixed(2)} {point.unit}
 								</Typography>
+
 								<Typography
 									variant='caption'
-									sx={{ color: 'text.secondary' }}
+									sx={{
+										color: 'text.secondary',
+									}}
 								>
 									{(point.start / 1000).toFixed(2)} km along
 									route

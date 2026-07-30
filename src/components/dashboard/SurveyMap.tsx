@@ -7,6 +7,8 @@ import {
 	IconButton,
 	Tooltip as MuiTooltip,
 	Typography,
+	useMediaQuery,
+	useTheme,
 } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 import {
@@ -41,29 +43,27 @@ type MapControllerProps = {
 	route: Position[]
 	resetKey: number
 	selectedPosition?: Position
+	compact: boolean
 }
 
 const MapController = ({
 	route,
 	resetKey,
 	selectedPosition,
+	compact,
 }: MapControllerProps) => {
 	const map = useMap()
 
 	useEffect(() => {
-		if (selectedPosition || route.length <= 1) {
-			return
-		}
+		if (selectedPosition || route.length <= 1) return
 
 		map.fitBounds(route, {
-			padding: [28, 28],
+			padding: compact ? [12, 12] : [28, 28],
 		})
-	}, [map, resetKey, route, selectedPosition])
+	}, [compact, map, resetKey, route, selectedPosition])
 
 	useEffect(() => {
-		if (!selectedPosition) {
-			return
-		}
+		if (!selectedPosition) return
 
 		map.flyTo(selectedPosition, Math.max(map.getZoom(), 16), {
 			duration: 0.6,
@@ -81,6 +81,9 @@ export const SurveyMap = ({
 	ukriData,
 	onSelect,
 }: SurveyMapProps) => {
+	const theme = useTheme()
+	const compact = useMediaQuery(theme.breakpoints.down('sm'))
+
 	const [resetKey, setResetKey] = useState(0)
 
 	const route = useMemo(() => {
@@ -134,7 +137,13 @@ export const SurveyMap = ({
 	}
 
 	return (
-		<Card sx={{ p: 3, borderRadius: 3, height: '100%' }}>
+		<Card
+			sx={{
+				p: 3,
+				borderRadius: 3,
+				height: '100%',
+			}}
+		>
 			<Box sx={{ mb: 2 }}>
 				<Typography variant='h6'>Survey route</Typography>
 
@@ -167,6 +176,7 @@ export const SurveyMap = ({
 						route={route}
 						resetKey={resetKey}
 						selectedPosition={selectedPosition}
+						compact={compact}
 					/>
 
 					<TileLayer
