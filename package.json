@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+	"typecheck": "tsc --noEmit",
+	"test": "jest",
+	"test:watch": "jest --watch"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -25,6 +28,7 @@
     "react-leaflet": "^5.0.0"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/leaflet": "^1.9.21",
     "@types/node": "^20",
     "@types/papaparse": "^5.5.2",
@@ -33,6 +37,8 @@
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
+    "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1",
     "typescript": "^5"
   }
 }
