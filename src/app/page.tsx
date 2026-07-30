@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { PointsOfInterest } from '@/components/dashboard/PointsOfInterest'
+import { SectionNav } from '@/components/dashboard/SectionNav'
 import { SurveyChart } from '@/components/dashboard/SurveyChart'
 import { SurveyOverview } from '@/components/dashboard/SurveyOverview'
 import { SurveyTable } from '@/components/dashboard/SurveyTable'
@@ -115,48 +116,58 @@ export default function Home() {
 		>
 			<Container maxWidth='xl'>
 				<Stack sx={{ gap: 4 }}>
-					<DashboardHeader />
+					<Box id='overview' sx={{ scrollMarginTop: 100 }}>
+						<DashboardHeader />
+					</Box>
+
+					<SectionNav />
 
 					<SurveyOverview mpdData={mpdData} ukriData={ukriData} />
 
-					<SurveyChart
-						metric={metric}
-						onMetricChange={changeMetric}
-						selectedStart={selected?.start ?? null}
-						onSelect={selectFromChart}
-						mpdData={mpdData}
-						ukriData={ukriData}
-					/>
+					<Box id='measurements' sx={{ scrollMarginTop: 100 }}>
+						<SurveyChart
+							metric={metric}
+							onMetricChange={changeMetric}
+							selectedStart={selected?.start ?? null}
+							onSelect={selectFromChart}
+							mpdData={mpdData}
+							ukriData={ukriData}
+						/>
+					</Box>
 
-					<Grid container spacing={3}>
-						<Grid size={{ xs: 12, lg: 8 }}>
-							<SurveyMap
-								metric={metric}
-								selected={selected}
-								highlighted={highlighted}
-								mpdData={mpdData}
-								ukriData={ukriData}
-								onSelect={setSelected}
-							/>
+					<Box id='route' sx={{ scrollMarginTop: 100 }}>
+						<Grid container spacing={3}>
+							<Grid size={{ xs: 12, lg: 8 }}>
+								<SurveyMap
+									metric={metric}
+									selected={selected}
+									highlighted={highlighted}
+									mpdData={mpdData}
+									ukriData={ukriData}
+									onSelect={setSelected}
+								/>
+							</Grid>
+
+							<Grid size={{ xs: 12, lg: 4 }}>
+								<PointsOfInterest
+									metric={metric}
+									mpdData={mpdData}
+									ukriData={ukriData}
+									selected={selected}
+									onSelect={setSelected}
+									onHighlight={setHighlighted}
+								/>
+							</Grid>
 						</Grid>
+					</Box>
 
-						<Grid size={{ xs: 12, lg: 4 }}>
-							<PointsOfInterest
-								metric={metric}
-								mpdData={mpdData}
-								ukriData={ukriData}
-								selected={selected}
-								onSelect={setSelected}
-								onHighlight={setHighlighted}
-							/>
-						</Grid>
-					</Grid>
-
-					<SurveyTable
-						metric={metric}
-						mpdData={mpdData}
-						ukriData={ukriData}
-					/>
+					<Box id='data' sx={{ scrollMarginTop: 100 }}>
+						<SurveyTable
+							metric={metric}
+							mpdData={mpdData}
+							ukriData={ukriData}
+						/>
+					</Box>
 				</Stack>
 			</Container>
 		</Box>
