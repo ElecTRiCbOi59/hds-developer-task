@@ -48,11 +48,13 @@ export default function Home() {
 	const [mode, setMode] = useState<ChartMode>(() => getSavedChartMode())
 	const [selected, setSelected] = useState<SurveySelection | null>(null)
 	const [highlighted, setHighlighted] = useState<SurveySelection | null>(null)
+	const [showPointsOfInterest, setShowPointsOfInterest] = useState(false)
 
 	const changeMode = (nextMode: ChartMode) => {
 		setMode(nextMode)
 		setSelected(null)
 		setHighlighted(null)
+		setShowPointsOfInterest(false)
 		saveChartMode(nextMode)
 	}
 
@@ -172,6 +174,7 @@ export default function Home() {
 									highlighted={highlighted}
 									mpdData={mpdData}
 									ukriData={ukriData}
+									showPointsOfInterest={showPointsOfInterest}
 									onSelect={setSelected}
 								/>
 							</Grid>
@@ -182,6 +185,8 @@ export default function Home() {
 									selected={selected}
 									mpdData={mpdData}
 									ukriData={ukriData}
+									showAllOnMap={showPointsOfInterest}
+									onShowAllOnMapChange={setShowPointsOfInterest}
 									onSelect={setSelected}
 									onHover={setHighlighted}
 								/>
