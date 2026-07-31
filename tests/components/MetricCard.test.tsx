@@ -17,7 +17,9 @@ describe('MetricCard', () => {
 		expect(view.container.textContent).toContain('Route length')
 		expect(view.container.textContent).toContain('4.12 km')
 		expect(view.container.textContent).toContain('Full surveyed distance')
-		expect(view.container.querySelector('[data-testid="metric-icon"]')).not.toBeNull()
+		expect(
+			view.container.querySelector('[data-testid="metric-icon"]'),
+		).not.toBeNull()
 
 		view.cleanup()
 	})

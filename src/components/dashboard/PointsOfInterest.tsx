@@ -186,7 +186,10 @@ export const PointsOfInterest = ({
 													fontWeight: 800,
 												}}
 											>
-												{String(index + 1).padStart(2, '0')}
+												{String(index + 1).padStart(
+													2,
+													'0',
+												)}
 											</Box>
 
 											<Box sx={{ flex: 1, ml: 1.25 }}>
@@ -198,8 +201,11 @@ export const PointsOfInterest = ({
 														flexWrap: 'wrap',
 													}}
 												>
-													<Typography sx={{ fontWeight: 700 }}>
-														{point.value.toFixed(2)} {point.unit}
+													<Typography
+														sx={{ fontWeight: 700 }}
+													>
+														{point.value.toFixed(2)}{' '}
+														{point.unit}
 													</Typography>
 
 													{mode === 'combined' && (
@@ -218,9 +224,14 @@ export const PointsOfInterest = ({
 
 												<Typography
 													variant='caption'
-													sx={{ color: 'text.secondary' }}
+													sx={{
+														color: 'text.secondary',
+													}}
 												>
-													{(point.start / 1000).toFixed(2)} km along route
+													{(
+														point.start / 1000
+													).toFixed(2)}{' '}
+													km along route
 												</Typography>
 											</Box>
 
@@ -230,7 +241,10 @@ export const PointsOfInterest = ({
 													color: metricColour,
 												}}
 											>
-												<Icon name='location' size={19} />
+												<Icon
+													name='location'
+													size={19}
+												/>
 											</Box>
 										</ButtonBase>
 									)

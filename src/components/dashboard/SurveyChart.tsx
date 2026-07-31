@@ -50,6 +50,34 @@ type ChartLegendProps = {
 	onToggle: (name: string) => void
 }
 
+const chartContent = {
+	combined: {
+		unit: 'mm | m/km',
+		info: 'MPD is compared with the average UKRI value at each matching survey position. UKRI is averaged across the four tracks only for this comparison.',
+		description:
+			'Compare both survey methods at the same positions along the route.',
+	},
+	mpd: {
+		unit: 'mm',
+		info: 'Mean Profile Depth, measured in millimetres.',
+		description:
+			'Mean Profile Depth measurements across the surveyed route.',
+	},
+	ukri: {
+		unit: 'm/km',
+		info: 'UK Ride Index, measured in metres per kilometre across four survey tracks.',
+		description:
+			'UK Ride Index measurements across all four survey tracks.',
+	},
+} satisfies Record<
+	ChartMode,
+	{
+		unit: string
+		info: string
+		description: string
+	}
+>
+
 const ChartLegend = ({ series, hiddenSeries, onToggle }: ChartLegendProps) => {
 	if (series.length <= 1) return null
 
@@ -174,26 +202,7 @@ export const SurveyChart = ({
 		})
 	}, [compact, mode, mpdDataPoints, onSelect, selectedStart, visibleSeries])
 
-	const content = {
-		combined: {
-			unit: 'mm | m/km',
-			info: 'MPD is compared with the average UKRI value at each matching survey position. UKRI is averaged across the four supplied tracks only for this comparison.',
-			description:
-				'Compare both survey methods at the same positions along the route.',
-		},
-		mpd: {
-			unit: 'mm',
-			info: 'Mean Profile Depth, measured in millimetres.',
-			description:
-				'Mean Profile Depth measurements across the surveyed route.',
-		},
-		ukri: {
-			unit: 'm/km',
-			info: 'UK Ride Index, measured in metres per kilometre across four survey tracks.',
-			description:
-				'UK Ride Index measurements across all four survey tracks.',
-		},
-	}[mode]
+	const content = chartContent[mode]
 
 	const toggleSeries = (name: string) => {
 		setHiddenSeries((current) => {

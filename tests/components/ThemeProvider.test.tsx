@@ -4,7 +4,8 @@ import { ThemeProvider } from '@/components/ThemeProvider'
 import { renderComponent } from '../helpers/renderComponent'
 
 jest.mock('@mui/material-nextjs/v16-appRouter', () => ({
-	AppRouterCacheProvider: ({ children }: { children: React.ReactNode }) => children,
+	AppRouterCacheProvider: ({ children }: { children: React.ReactNode }) =>
+		children,
 }))
 
 describe('ThemeProvider', () => {

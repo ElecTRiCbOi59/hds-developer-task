@@ -5,12 +5,14 @@
 /.next
 /out
 
-# test output
+# tests
 /coverage
+
+# TypeScript
+*.tsbuildinfo
 
 # local files
 .DS_Store
-*.tsbuildinfo
 
 # environment files
 .env*

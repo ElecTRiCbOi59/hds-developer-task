@@ -99,9 +99,7 @@ const formatValue = (
 	return unit ? `${formatted} ${unit}` : formatted
 }
 
-const formatDistance = (
-	value: string | number | null | undefined,
-) => {
+const formatDistance = (value: string | number | null | undefined) => {
 	const distance = Number(value)
 
 	if (!Number.isFinite(distance)) {
@@ -308,7 +306,8 @@ export const getCombinedChartOptions = ({
 			events: {
 				dataPointSelection: (_event, _chart, config) => {
 					const activeSeries = series[config?.seriesIndex ?? -1]
-					const point = activeSeries?.data[config?.dataPointIndex ?? -1]
+					const point =
+						activeSeries?.data[config?.dataPointIndex ?? -1]
 
 					if (point && activeSeries) {
 						onSelect(activeSeries.metric, point.x)

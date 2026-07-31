@@ -1,6 +1,13 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals'
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	jest,
+} from '@jest/globals'
 
 import { PointsOfInterest } from '@/components/dashboard/PointsOfInterest'
 import type { MpdMeasurement, UkriMeasurement } from '@/types/survey'
@@ -66,7 +73,9 @@ describe('PointsOfInterest', () => {
 		)
 
 		expect(container.textContent).toContain('Points of interest')
-		expect(container.textContent).toContain('Highest measurements in the active view.')
+		expect(container.textContent).toContain(
+			'Highest measurements in the active view.',
+		)
 
 		act(() => {
 			button?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
@@ -89,12 +98,14 @@ describe('PointsOfInterest', () => {
 			)
 		})
 
-		const hideButton = Array.from(container.querySelectorAll('button')).find(
-			(item) => item.textContent?.includes('Hide from map'),
-		)
+		const hideButton = Array.from(
+			container.querySelectorAll('button'),
+		).find((item) => item.textContent?.includes('Hide from map'))
 
 		act(() => {
-			hideButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+			hideButton?.dispatchEvent(
+				new MouseEvent('click', { bubbles: true }),
+			)
 		})
 
 		expect(onShowAllOnMapChange).toHaveBeenCalledWith(false)
@@ -118,12 +129,14 @@ describe('PointsOfInterest', () => {
 			)
 		})
 
-		const pointButton = Array.from(container.querySelectorAll('button')).find(
-			(item) => item.textContent?.includes('10.00 mm'),
-		)
+		const pointButton = Array.from(
+			container.querySelectorAll('button'),
+		).find((item) => item.textContent?.includes('10.00 mm'))
 
 		act(() => {
-			pointButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+			pointButton?.dispatchEvent(
+				new MouseEvent('click', { bubbles: true }),
+			)
 		})
 
 		expect(onSelect).toHaveBeenCalledWith(

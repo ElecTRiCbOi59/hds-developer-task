@@ -82,12 +82,10 @@ export const SectionNav = () => {
 		return () => {
 			window.removeEventListener('scroll', updateActiveSection)
 			window.removeEventListener('resize', updateActiveSection)
-		}
-	}, [])
 
-	useEffect(() => {
-		return () => {
-			if (scrollTimeout.current) clearTimeout(scrollTimeout.current)
+			if (scrollTimeout.current) {
+				clearTimeout(scrollTimeout.current)
+			}
 		}
 	}, [])
 

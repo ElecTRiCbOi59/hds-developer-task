@@ -1,6 +1,13 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals'
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	jest,
+} from '@jest/globals'
 
 import { MetricSwitch } from '@/components/dashboard/MetricSwitch'
 
@@ -41,12 +48,14 @@ describe('MetricSwitch', () => {
 			root.render(<MetricSwitch value='combined' onChange={onChange} />)
 		})
 
-		const ukriButton = Array.from(container.querySelectorAll('button')).find(
-			(button) => button.textContent === 'UKRI',
-		)
+		const ukriButton = Array.from(
+			container.querySelectorAll('button'),
+		).find((button) => button.textContent === 'UKRI')
 
 		act(() => {
-			ukriButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+			ukriButton?.dispatchEvent(
+				new MouseEvent('click', { bubbles: true }),
+			)
 		})
 
 		expect(onChange).toHaveBeenCalledWith('ukri')

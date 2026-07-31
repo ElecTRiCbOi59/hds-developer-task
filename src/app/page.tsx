@@ -18,13 +18,9 @@ import { SurveyChart } from '@/components/dashboard/SurveyChart'
 import { SurveyOverview } from '@/components/dashboard/SurveyOverview'
 import { SurveyTable } from '@/components/dashboard/SurveyTable'
 import { useSurveyData } from '@/hooks/useSurveyData'
-import type {
-	ChartMode,
-	Coordinates,
-	SurveyMetric,
-	SurveySelection,
-} from '@/types/survey'
+import type { ChartMode, SurveyMetric, SurveySelection } from '@/types/survey'
 import { getSavedChartMode, saveChartMode } from '@/utils/preferences'
+import { getChartSelection } from '@/utils/selection'
 
 const SurveyMap = dynamic(
 	() =>
@@ -33,15 +29,6 @@ const SurveyMap = dynamic(
 		),
 	{ ssr: false },
 )
-
-const averageCoordinates = (coordinates: Coordinates[]): Coordinates => ({
-	latitude:
-		coordinates.reduce((total, item) => total + item.latitude, 0) /
-		coordinates.length,
-	longitude:
-		coordinates.reduce((total, item) => total + item.longitude, 0) /
-		coordinates.length,
-})
 
 export default function Home() {
 	const { mpdData, ukriData, loading, error } = useSurveyData()
@@ -63,56 +50,19 @@ export default function Home() {
 		start: number,
 		track?: number,
 	) => {
-		if (metric === 'mpd') {
-			const measurement = mpdData.find((item) => item.start === start)
-			if (!measurement) return
-
-			const selection: SurveySelection = {
-				id: `mpd-${measurement.section}`,
-				metric: 'mpd',
-				start: measurement.start,
-				value: measurement.mpd,
-				coordinates: measurement.coordinates,
-			}
-
-			setSelected(selected?.id === selection.id ? null : selection)
-			return
-		}
-
-		if (track) {
-			const measurement = ukriData.find(
-				(item) => item.start === start && item.track === track,
-			)
-			if (!measurement) return
-
-			const selection: SurveySelection = {
-				id: `ukri-${measurement.track}-${measurement.segment}`,
-				metric: 'ukri',
-				start: measurement.start,
-				value: measurement.ukri,
-				coordinates: measurement.coordinates,
-			}
-
-			setSelected(selected?.id === selection.id ? null : selection)
-			return
-		}
-
-		const measurements = ukriData.filter((item) => item.start === start)
-		if (measurements.length === 0) return
-
-		const selection: SurveySelection = {
-			id: `ukri-average-${start}`,
-			metric: 'ukri',
+		const selection = getChartSelection(
+			metric,
 			start,
-			value:
-				measurements.reduce((total, item) => total + item.ukri, 0) /
-				measurements.length,
-			coordinates: averageCoordinates(
-				measurements.map((item) => item.coordinates),
-			),
-		}
+			mpdData,
+			ukriData,
+			track,
+		)
 
-		setSelected(selected?.id === selection.id ? null : selection)
+		if (!selection) return
+
+		setSelected((current) =>
+			current?.id === selection.id ? null : selection,
+		)
 	}
 
 	if (loading) {
@@ -186,7 +136,9 @@ export default function Home() {
 									mpdData={mpdData}
 									ukriData={ukriData}
 									showAllOnMap={showPointsOfInterest}
-									onShowAllOnMapChange={setShowPointsOfInterest}
+									onShowAllOnMapChange={
+										setShowPointsOfInterest
+									}
 									onSelect={setSelected}
 									onHover={setHighlighted}
 								/>
