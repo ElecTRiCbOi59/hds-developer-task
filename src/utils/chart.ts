@@ -1,6 +1,6 @@
 import type { ApexOptions } from 'apexcharts'
 
-import { colours } from '@/theme/theme'
+import { colours, dataColours } from '@/theme/theme'
 import type {
 	MpdMeasurement,
 	SurveyMetric,
@@ -20,12 +20,7 @@ export type ChartSeries = {
 	track?: number
 }
 
-const UKRI_TRACK_COLOURS = [
-	colours.success,
-	colours.successDark,
-	colours.primaryDark,
-	colours.primaryLight,
-]
+const UKRI_TRACK_COLOURS = dataColours.ukriTracks
 
 export const getMpdChartData = (data: MpdMeasurement[]): ChartPoint[] =>
 	data
@@ -79,13 +74,13 @@ export const getCombinedChartSeries = (
 	{
 		name: 'MPD (mm)',
 		metric: 'mpd',
-		color: colours.primary,
+		color: dataColours.mpd,
 		data: getMpdChartData(mpdData),
 	},
 	{
 		name: 'Average UKRI (m/km)',
 		metric: 'ukri',
-		color: colours.success,
+		color: dataColours.ukri,
 		data: getAverageUkriChartData(ukriData),
 	},
 ]
@@ -206,7 +201,7 @@ export const getMpdChartOptions = ({
 			},
 		},
 	},
-	colors: [colours.primary],
+	colors: [dataColours.mpd],
 	stroke: {
 		curve: 'smooth',
 		width: compact ? 2 : 2.5,

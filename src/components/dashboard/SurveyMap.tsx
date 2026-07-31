@@ -1,6 +1,5 @@
 'use client'
 
-import MyLocationRoundedIcon from '@mui/icons-material/MyLocationRounded'
 import {
 	Box,
 	Card,
@@ -22,7 +21,8 @@ import {
 	useMap,
 } from 'react-leaflet'
 
-import { colours, shadows } from '@/theme/theme'
+import { Icon } from '@/components/icons/Icon'
+import { colours, dataColours, shadows } from '@/theme/theme'
 import type {
 	ChartMode,
 	MpdMeasurement,
@@ -64,9 +64,33 @@ const MapController = ({
 	useEffect(() => {
 		if (selectedPosition || positions.length <= 1) return
 
-		map.fitBounds(positions, {
-			padding: compact ? [12, 12] : [28, 28],
-		})
+		let cancelled = false
+		let frameId: number | null = null
+
+		const fitRoute = () => {
+			frameId = requestAnimationFrame(() => {
+				if (cancelled || !map.getContainer().isConnected) return
+
+				map.invalidateSize({
+					animate: false,
+				})
+
+				map.fitBounds(positions, {
+					padding: compact ? [12, 12] : [28, 28],
+					animate: false,
+				})
+			})
+		}
+
+		map.whenReady(fitRoute)
+
+		return () => {
+			cancelled = true
+
+			if (frameId !== null) {
+				cancelAnimationFrame(frameId)
+			}
+		}
 	}, [compact, map, positions, resetKey, selectedPosition])
 
 	useEffect(() => {
@@ -84,6 +108,9 @@ const toPosition = (coordinates: {
 	latitude: number
 	longitude: number
 }): Position => [coordinates.latitude, coordinates.longitude]
+
+const getUkriTrackColour = (track: number) =>
+	dataColours.ukriTracks[(track - 1) % dataColours.ukriTracks.length]
 
 export const SurveyMap = ({
 	mode,
@@ -157,7 +184,7 @@ export const SurveyMap = ({
 	}
 
 	const markerColour =
-		activeMetric === 'ukri' ? colours.success : colours.primary
+		activeMetric === 'ukri' ? dataColours.ukri : dataColours.mpd
 
 	const showMpdRoute =
 		mode === 'mpd' || (mode === 'combined' && focusedMetric !== 'ukri')
@@ -197,13 +224,22 @@ export const SurveyMap = ({
 							<Chip
 								label='MPD'
 								size='small'
-								sx={{ color: 'primary.main', fontWeight: 700 }}
+								variant='outlined'
+								sx={{
+									color: dataColours.mpd,
+									borderColor: dataColours.mpd,
+									fontWeight: 700,
+								}}
 							/>
 							<Chip
 								label='UKRI'
 								size='small'
-								color='success'
-								sx={{ fontWeight: 700 }}
+								variant='outlined'
+								sx={{
+									color: dataColours.ukri,
+									borderColor: dataColours.ukri,
+									fontWeight: 700,
+								}}
 							/>
 						</Stack>
 					)}
@@ -241,7 +277,7 @@ export const SurveyMap = ({
 							key={`mpd-${mode}-${focusedMetric ?? 'all'}`}
 							positions={mpdRoute}
 							pathOptions={{
-								color: colours.primary,
+								color: dataColours.mpd,
 								weight: showingBothRoutes ? 5 : 4.5,
 								opacity: 0.9,
 							}}
@@ -254,7 +290,7 @@ export const SurveyMap = ({
 								key={`ukri-${route.track}-${mode}-${focusedMetric ?? 'all'}`}
 								positions={route.positions}
 								pathOptions={{
-									color: colours.success,
+									color: getUkriTrackColour(route.track),
 									weight: showingBothRoutes ? 3 : 3.5,
 									opacity: showingBothRoutes ? 0.9 : 0.8,
 									dashArray: showingBothRoutes
@@ -302,7 +338,7 @@ export const SurveyMap = ({
 							'&:hover': { bgcolor: 'grey.100' },
 						}}
 					>
-						<MyLocationRoundedIcon sx={{ fontSize: 19 }} />
+						<Icon name='resetMap' size={19} />
 					</IconButton>
 				</MuiTooltip>
 			</Box>

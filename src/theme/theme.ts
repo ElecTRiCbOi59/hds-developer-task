@@ -3,36 +3,41 @@
 import { createTheme } from '@mui/material/styles'
 
 export const colours = {
-	primary: '#1877F2',
-	primaryLight: '#5B9CF6',
-	primaryDark: '#0C53B7',
-	primarySoft: '#E8F3FF',
-	success: '#22C55E',
-	successLight: '#86E8AB',
-	successDark: '#118D57',
-	successSoft: '#D8FBDE',
-	successText: '#065E49',
-	grid: '#EEF0F3',
+	primary: '#3D8494',
+	primaryLight: '#69A7B3',
+	primaryDark: '#286372',
+	primarySoft: '#EAF3F5',
+	secondary: '#2B2D2F',
+	secondaryLight: '#596064',
+	secondaryDark: '#17191A',
+	secondarySoft: '#EFF1F2',
+	grid: '#E9EDEE',
 	white: '#FFFFFF',
 	grey: {
-		50: '#FCFDFD',
-		100: '#F9FAFB',
-		200: '#F4F6F8',
-		300: '#DFE3E8',
-		400: '#C4CDD5',
-		500: '#919EAB',
-		600: '#637381',
-		700: '#454F5B',
-		800: '#1C252E',
-		900: '#141A21',
+		50: '#FAFBFB',
+		100: '#F6F8F8',
+		200: '#EFF2F2',
+		300: '#DDE3E4',
+		400: '#BCC6C8',
+		500: '#879497',
+		600: '#667276',
+		700: '#485256',
+		800: '#2B3235',
+		900: '#171B1D',
 	},
 }
 
+export const dataColours = {
+	mpd: '#3D8494',
+	ukri: '#D97706',
+	ukriTracks: ['#16A34A', '#2563EB', '#7C3AED', '#EA580C'],
+}
+
 export const shadows = {
-	card: '0 0 2px rgba(145, 158, 171, 0.20), 0 12px 24px -4px rgba(145, 158, 171, 0.12)',
-	floating: '0 8px 24px rgba(145, 158, 171, 0.12)',
-	control: '0 1px 3px rgba(145, 158, 171, 0.20)',
-	mapControl: '0 4px 12px rgba(28, 37, 46, 0.16)',
+	card: '0 1px 2px rgba(23, 27, 29, 0.04), 0 12px 28px rgba(23, 27, 29, 0.06)',
+	floating: '0 10px 30px rgba(23, 27, 29, 0.10)',
+	control: '0 1px 3px rgba(23, 27, 29, 0.12)',
+	mapControl: '0 4px 14px rgba(23, 27, 29, 0.16)',
 }
 
 export const theme = createTheme({
@@ -42,22 +47,24 @@ export const theme = createTheme({
 			light: colours.primaryLight,
 			main: colours.primary,
 			dark: colours.primaryDark,
+			contrastText: colours.white,
 		},
-		success: {
-			light: colours.successLight,
-			main: colours.success,
-			dark: colours.successDark,
+		secondary: {
+			light: colours.secondaryLight,
+			main: colours.secondary,
+			dark: colours.secondaryDark,
+			contrastText: colours.white,
 		},
 		grey: colours.grey,
 		background: {
-			default: colours.grey[200],
+			default: colours.grey[100],
 			paper: colours.white,
 		},
 		text: {
-			primary: colours.grey[800],
+			primary: colours.grey[900],
 			secondary: colours.grey[600],
 		},
-		divider: 'rgba(145, 158, 171, 0.20)',
+		divider: 'rgba(72, 82, 86, 0.14)',
 	},
 	shape: {
 		borderRadius: 12,
@@ -68,14 +75,14 @@ export const theme = createTheme({
 		h3: {
 			fontSize: '2rem',
 			fontWeight: 800,
-			lineHeight: 1.25,
-			letterSpacing: '-0.03em',
+			lineHeight: 1.2,
+			letterSpacing: '-0.035em',
 		},
 		h4: {
 			fontWeight: 800,
 		},
 		h6: {
-			fontWeight: 700,
+			fontWeight: 750,
 		},
 		button: {
 			textTransform: 'none',
@@ -86,7 +93,7 @@ export const theme = createTheme({
 		MuiCard: {
 			styleOverrides: {
 				root: {
-					border: 0,
+					border: '1px solid rgba(72, 82, 86, 0.08)',
 					boxShadow: shadows.card,
 				},
 			},
@@ -94,6 +101,13 @@ export const theme = createTheme({
 		MuiButton: {
 			defaultProps: {
 				disableElevation: true,
+			},
+		},
+		MuiChip: {
+			styleOverrides: {
+				root: {
+					fontWeight: 700,
+				},
 			},
 		},
 	},

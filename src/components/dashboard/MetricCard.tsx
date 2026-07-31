@@ -38,7 +38,7 @@ export const MetricCard = ({
 						sx={{
 							mb: 1,
 							color: 'text.secondary',
-							fontWeight: 600,
+							fontWeight: 650,
 						}}
 					>
 						{label}
@@ -47,11 +47,9 @@ export const MetricCard = ({
 					<Typography
 						variant='h4'
 						sx={{
-							fontSize: {
-								xs: 26,
-								md: 30,
-							},
-							letterSpacing: '-0.03em',
+							fontSize: { xs: 26, md: 30 },
+							letterSpacing: '-0.035em',
+							color: 'text.primary',
 						}}
 					>
 						{value}
@@ -80,7 +78,7 @@ export const MetricCard = ({
 						placeItems: 'center',
 						borderRadius: 2,
 						bgcolor: colours.primarySoft,
-						color: 'primary.main',
+						color: 'primary.dark',
 					}}
 				>
 					{icon}

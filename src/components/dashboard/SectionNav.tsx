@@ -1,21 +1,23 @@
 'use client'
 
-import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined'
-import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined'
-import MapOutlinedIcon from '@mui/icons-material/MapOutlined'
-import TableRowsOutlinedIcon from '@mui/icons-material/TableRowsOutlined'
 import { Box, ButtonBase, Stack } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { useEffect, useRef, useState } from 'react'
 
+import { Icon } from '@/components/icons/Icon'
+import type { IconName } from '@/components/icons/icons'
 import { shadows } from '@/theme/theme'
 
 const sections = [
-	{ label: 'Overview', id: 'overview', icon: AssessmentOutlinedIcon },
-	{ label: 'Measurements', id: 'measurements', icon: InsightsOutlinedIcon },
-	{ label: 'Route', id: 'route', icon: MapOutlinedIcon },
-	{ label: 'Data', id: 'data', icon: TableRowsOutlinedIcon },
-]
+	{ label: 'Overview', id: 'overview', icon: 'overview' },
+	{ label: 'Measurements', id: 'measurements', icon: 'measurements' },
+	{ label: 'Route', id: 'route', icon: 'route' },
+	{ label: 'Data', id: 'data', icon: 'data' },
+] satisfies {
+	label: string
+	id: string
+	icon: IconName
+}[]
 
 const SCROLL_OFFSET = 120
 
@@ -97,6 +99,7 @@ export const SectionNav = () => {
 
 		scrollingTo.current = id
 		setActiveSection(id)
+
 		element.scrollIntoView({
 			behavior: 'smooth',
 			block: 'start',
@@ -134,7 +137,7 @@ export const SectionNav = () => {
 					'&::-webkit-scrollbar': { display: 'none' },
 				}}
 			>
-				{sections.map(({ label, id, icon: Icon }) => {
+				{sections.map(({ label, id, icon }) => {
 					const active = activeSection === id
 
 					return (
@@ -176,7 +179,7 @@ export const SectionNav = () => {
 								},
 							}}
 						>
-							<Icon sx={{ fontSize: 18 }} />
+							<Icon name={icon} size={18} />
 							{label}
 						</ButtonBase>
 					)

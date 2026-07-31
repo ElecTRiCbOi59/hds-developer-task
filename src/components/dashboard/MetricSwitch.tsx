@@ -41,13 +41,13 @@ export const MetricSwitch = ({ value, onChange }: MetricSwitchProps) => {
 							minWidth: mode.value === 'combined' ? 76 : 58,
 							px: 1.25,
 							borderRadius: 1,
-							color: active ? 'text.primary' : 'text.secondary',
+							color: active ? 'primary.dark' : 'text.secondary',
 							bgcolor: active
 								? 'background.paper'
 								: 'transparent',
 							boxShadow: active ? shadows.control : 'none',
 							fontSize: 12,
-							fontWeight: 700,
+							fontWeight: 750,
 							transition:
 								'background-color 150ms ease, box-shadow 150ms ease, color 150ms ease',
 							'&:hover': {
@@ -56,9 +56,9 @@ export const MetricSwitch = ({ value, onChange }: MetricSwitchProps) => {
 									: (theme) =>
 											alpha(
 												theme.palette.background.paper,
-												0.55,
+												0.7,
 											),
-								color: 'text.primary',
+								color: active ? 'primary.dark' : 'text.primary',
 							},
 						}}
 					>

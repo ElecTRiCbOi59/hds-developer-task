@@ -7,8 +7,8 @@ import { ThemeProvider } from '@/components/ThemeProvider'
 import './globals.css'
 
 export const metadata: Metadata = {
-	title: 'HDS Survey Dashboard',
-	description: 'A602 road survey data dashboard',
+	title: 'A602 Road Survey | Highway Data Systems',
+	description: 'MPD and UKRI road survey dashboard for Highway Data Systems',
 }
 
 export default function RootLayout({

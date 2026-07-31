@@ -18,6 +18,7 @@ import {
 } from '@mui/x-data-grid'
 import { useMemo, useState } from 'react'
 
+import { dataColours } from '@/theme/theme'
 import type {
 	ChartMode,
 	MpdMeasurement,
@@ -172,9 +173,20 @@ export const SurveyTable = ({ mode, mpdData, ukriData }: SurveyTableProps) => {
 				<Chip
 					label={params.row.metric.toUpperCase()}
 					size='small'
-					color={params.row.metric === 'ukri' ? 'success' : 'primary'}
 					variant='outlined'
-					sx={{ height: 22, fontSize: 10, fontWeight: 800 }}
+					sx={{
+						height: 22,
+						fontSize: 10,
+						fontWeight: 800,
+						color:
+							params.row.metric === 'mpd'
+								? dataColours.mpd
+								: dataColours.ukri,
+						borderColor:
+							params.row.metric === 'mpd'
+								? dataColours.mpd
+								: dataColours.ukri,
+					}}
 				/>
 			),
 		}

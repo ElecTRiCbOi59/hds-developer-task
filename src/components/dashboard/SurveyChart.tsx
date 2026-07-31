@@ -1,6 +1,5 @@
 'use client'
 
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import {
 	Box,
 	ButtonBase,
@@ -16,6 +15,7 @@ import { useTheme } from '@mui/material/styles'
 import dynamic from 'next/dynamic'
 import { useMemo, useState } from 'react'
 
+import { Icon } from '@/components/icons/Icon'
 import { MetricSwitch } from '@/components/dashboard/MetricSwitch'
 import type {
 	ChartMode,
@@ -189,9 +189,9 @@ export const SurveyChart = ({
 		},
 		ukri: {
 			unit: 'm/km',
-			info: 'UK Ride Index, measured in metres per kilometre. The four supplied survey tracks are shown separately.',
+			info: 'UK Ride Index, measured in metres per kilometre across four survey tracks.',
 			description:
-				'All four UKRI tracks using the original supplied readings.',
+				'UK Ride Index measurements across all four survey tracks.',
 		},
 	}[mode]
 
@@ -271,7 +271,7 @@ export const SurveyChart = ({
 								aria-label={content.info}
 								sx={{ color: 'text.secondary' }}
 							>
-								<InfoOutlinedIcon sx={{ fontSize: 18 }} />
+								<Icon name='info' size={18} />
 							</IconButton>
 						</Tooltip>
 					</Stack>

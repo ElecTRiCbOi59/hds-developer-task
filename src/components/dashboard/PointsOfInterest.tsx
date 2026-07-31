@@ -1,10 +1,11 @@
 'use client'
 
-import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined'
 import { Box, ButtonBase, Card, Chip, Stack, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { useMemo } from 'react'
 
+import { Icon } from '@/components/icons/Icon'
+import { dataColours } from '@/theme/theme'
 import type {
 	ChartMode,
 	MpdMeasurement,
@@ -98,10 +99,14 @@ export const PointsOfInterest = ({
 								>
 									<Typography
 										variant='caption'
-										sx={{ fontWeight: 800, color: 'text.secondary' }}
+										sx={{
+											fontWeight: 800,
+											color: 'text.secondary',
+										}}
 									>
 										{group.label}
 									</Typography>
+
 									<Typography
 										variant='caption'
 										sx={{ color: 'text.disabled' }}
@@ -115,12 +120,16 @@ export const PointsOfInterest = ({
 								{group.points.map((point, index) => {
 									const active = selected?.id === point.id
 									const metricColour =
-										point.metric === 'mpd' ? 'primary.main' : 'success.main'
+										point.metric === 'mpd'
+											? dataColours.mpd
+											: dataColours.ukri
 
 									return (
 										<ButtonBase
 											key={point.id}
-											onClick={() => onSelect(active ? null : point)}
+											onClick={() =>
+												onSelect(active ? null : point)
+											}
 											onMouseEnter={() => onHover(point)}
 											onMouseLeave={() => onHover(null)}
 											aria-pressed={active}
@@ -130,15 +139,11 @@ export const PointsOfInterest = ({
 												borderRadius: 2,
 												textAlign: 'left',
 												bgcolor: active
-													? (theme) =>
-															alpha(
-																point.metric === 'mpd'
-																	? theme.palette.primary.main
-																	: theme.palette.success.main,
-																0.08,
-															)
+													? alpha(metricColour, 0.08)
 													: 'transparent',
-												'&:hover': { bgcolor: 'grey.100' },
+												'&:hover': {
+													bgcolor: 'grey.100',
+												},
 											}}
 										>
 											<Box
@@ -148,13 +153,20 @@ export const PointsOfInterest = ({
 													display: 'grid',
 													placeItems: 'center',
 													borderRadius: 1.5,
-													bgcolor: active ? metricColour : 'grey.100',
-													color: active ? 'common.white' : 'text.secondary',
+													bgcolor: active
+														? metricColour
+														: 'grey.100',
+													color: active
+														? 'common.white'
+														: 'text.secondary',
 													fontSize: 11,
 													fontWeight: 800,
 												}}
 											>
-												{String(index + 1).padStart(2, '0')}
+												{String(index + 1).padStart(
+													2,
+													'0',
+												)}
 											</Box>
 
 											<Box sx={{ flex: 1, ml: 1.25 }}>
@@ -166,9 +178,15 @@ export const PointsOfInterest = ({
 														flexWrap: 'wrap',
 													}}
 												>
-													<Typography sx={{ fontWeight: 700 }}>
-														{point.value.toFixed(2)} {point.unit}
+													<Typography
+														sx={{
+															fontWeight: 700,
+														}}
+													>
+														{point.value.toFixed(2)}{' '}
+														{point.unit}
 													</Typography>
+
 													{mode === 'combined' && (
 														<Chip
 															label={point.metric.toUpperCase()}
@@ -182,17 +200,31 @@ export const PointsOfInterest = ({
 														/>
 													)}
 												</Stack>
+
 												<Typography
 													variant='caption'
-													sx={{ color: 'text.secondary' }}
+													sx={{
+														color: 'text.secondary',
+													}}
 												>
-													{(point.start / 1000).toFixed(2)} km along route
+													{(
+														point.start / 1000
+													).toFixed(2)}{' '}
+													km along route
 												</Typography>
 											</Box>
 
-											<LocationOnOutlinedIcon
-												sx={{ fontSize: 19, color: metricColour }}
-											/>
+											<Box
+												sx={{
+													display: 'flex',
+													color: metricColour,
+												}}
+											>
+												<Icon
+													name='location'
+													size={19}
+												/>
+											</Box>
 										</ButtonBase>
 									)
 								})}
